@@ -48,7 +48,7 @@ class PlayerService {
   }
 
   Future<List<Player>> _saveDefaultPlayer() async {
-    final defaultPlayer = Player(id: '1', name: 'Admin', points: 0);
+    final defaultPlayer = Player(id: '1', name: 'Vedo', points: 0);
     await savePlayers([defaultPlayer]);
     return [defaultPlayer];
   }

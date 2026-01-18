@@ -167,7 +167,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
                               fontSize: 18,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'ENTER PLAYER NAME',
+                              hintText: 'ENTER NAME',
                               hintStyle: TextStyle(
                                 color: Colors.white.withOpacity(0.3),
                                 letterSpacing: 2,
