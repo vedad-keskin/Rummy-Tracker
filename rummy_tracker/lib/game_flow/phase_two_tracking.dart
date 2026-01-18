@@ -14,7 +14,6 @@ class PhaseTwoTrackingScreen extends StatefulWidget {
 class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   final List<Map<String, int>> _rounds = [];
   final ScrollController _verticalController = ScrollController();
-  final ScrollController _totalVerticalController = ScrollController();
   final ScrollController _horizontalController = ScrollController();
 
   Map<String, int> _getTotals() {
@@ -81,7 +80,6 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   @override
   void dispose() {
     _verticalController.dispose();
-    _totalVerticalController.dispose();
     _horizontalController.dispose();
     super.dispose();
   }
@@ -116,41 +114,44 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     );
   }
 
-  Widget _buildRowCell(
-    String text, {
-    double height = 52.0,
-    bool isName = false,
-    bool isTotal = false,
-    bool isNegative = false,
-  }) {
+  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0}) {
+    final isNegative = total < 0;
     return Container(
       height: height,
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isTotal
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.white.withValues(alpha: 0.03),
-        borderRadius: isName
-            ? const BorderRadius.horizontal(left: Radius.circular(16))
-            : (isTotal
-                  ? const BorderRadius.horizontal(right: Radius.circular(16))
-                  : BorderRadius.zero),
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
-      child: Center(
-        child: Text(
-          text.toUpperCase(),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: isNegative
-                ? const Color(0xFF30E8BF)
-                : (isName ? Colors.white70 : Colors.white),
-            fontSize: isTotal ? 16 : 12,
-            fontWeight: isTotal || isName ? FontWeight.bold : FontWeight.normal,
-            fontFamily: isTotal ? 'monospace' : 'serif',
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              player.name.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'serif',
+              ),
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          Text(
+            '$total',
+            style: TextStyle(
+              color: isNegative ? const Color(0xFF30E8BF) : Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -221,8 +222,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      const double nameWidth = 100.0;
-                      const double totalWidth = 80.0;
+                      const double nameWidth = 140.0;
                       const double roundWidth = 70.0;
                       const double headerHeight = 60.0;
                       const double rowHeight = 52.0;
@@ -236,7 +236,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                         padding: EdgeInsets.symmetric(horizontal: sidePadding),
                         child: Row(
                           children: [
-                            // 1. Fixed Left: Player Names
+                            // 1. Fixed Left: Player Names with Totals
                             SizedBox(
                               width: nameWidth,
                               child: Column(
@@ -249,12 +249,15 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                       physics:
                                           const NeverScrollableScrollPhysics(),
                                       itemCount: playerCount,
-                                      itemBuilder: (context, i) =>
-                                          _buildRowCell(
-                                            widget.selectedPlayers[i].name,
-                                            isName: true,
-                                            height: rowHeight,
-                                          ),
+                                      itemBuilder: (context, i) {
+                                        final player = widget.selectedPlayers[i];
+                                        final total = totals[player.id] ?? 0;
+                                        return _buildPlayerRowCell(
+                                          player,
+                                          total,
+                                          height: rowHeight,
+                                        );
+                                      },
                                     ),
                                   ),
                                 ],
@@ -268,10 +271,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                 scrollDirection: Axis.horizontal,
                                 child: SizedBox(
                                   width: scrollableWidth.clamp(
-                                    constraints.maxWidth -
-                                        nameWidth -
-                                        totalWidth -
-                                        10,
+                                    constraints.maxWidth - nameWidth - 10,
                                     2000,
                                   ),
                                   child: Column(
@@ -329,12 +329,6 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                                       if (notification
                                                           is ScrollUpdateNotification) {
                                                         _verticalController
-                                                            .jumpTo(
-                                                              notification
-                                                                  .metrics
-                                                                  .pixels,
-                                                            );
-                                                        _totalVerticalController
                                                             .jumpTo(
                                                               notification
                                                                   .metrics
@@ -418,36 +412,6 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                     ],
                                   ),
                                 ),
-                              ),
-                            ),
-
-                            // 3. Fixed Right: Totals
-                            SizedBox(
-                              width: totalWidth,
-                              child: Column(
-                                children: [
-                                  _buildHeaderCell('TOTAL', isRight: true),
-                                  const SizedBox(height: 16),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      controller: _totalVerticalController,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: playerCount,
-                                      itemBuilder: (context, i) {
-                                        final player =
-                                            widget.selectedPlayers[i];
-                                        final score = totals[player.id] ?? 0;
-                                        return _buildRowCell(
-                                          '$score',
-                                          height: rowHeight,
-                                          isTotal: true,
-                                          isNegative: score < 0,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
                               ),
                             ),
                           ],
