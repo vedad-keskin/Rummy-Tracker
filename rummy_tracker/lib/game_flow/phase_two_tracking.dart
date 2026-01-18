@@ -146,6 +146,75 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     });
   }
 
+  Future<bool> _onWillPop() async {
+    // Check if there are any rounds or a round in progress
+    if (_rounds.isNotEmpty || _currentRound != null || _isInputExpanded) {
+      final shouldPop = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1B263B),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: Colors.white.withValues(alpha: 0.1),
+            ),
+          ),
+          title: Text(
+            'EXIT GAME?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+              fontFamily: 'serif',
+            ),
+          ),
+          content: Text(
+            'You have rounds in progress. Are you sure you want to exit? All progress will be lost.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 14,
+              fontFamily: 'serif',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'CANCEL',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF30E8BF),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'EXIT',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+      return shouldPop ?? false;
+    }
+    return true;
+  }
+
   void _declareWinner() {
     final totals = _getTotals();
     String? winnerId;
@@ -301,9 +370,18 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   Widget build(BuildContext context) {
     final totals = _getTotals();
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: Stack(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        body: Stack(
         children: [
           // Background
           Positioned.fill(
@@ -332,7 +410,12 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                   child: Row(
                     children: [
                       IconButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () async {
+                          final shouldPop = await _onWillPop();
+                          if (shouldPop && context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        },
                         icon: const Icon(
                           Icons.close_rounded,
                           color: Colors.white,
@@ -757,6 +840,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                   ),
           ),
         ],
+      ),
       ),
     );
   }
