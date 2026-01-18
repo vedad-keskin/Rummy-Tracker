@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rummy_tracker/players_section/players_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
@@ -105,6 +106,20 @@ class MainMenuScreen extends StatelessWidget {
                             color: const Color.fromARGB(255, 255, 1, 1),
                             onTap: () {
                               // TODO: Navigate to game setup
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          MenuTile(
+                            title: 'PLAYERS',
+                            icon: Icons.people_alt_rounded,
+                            color: const Color(0xFFFFAB40),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PlayersScreen(),
+                                ),
+                              );
                             },
                           ),
                           const SizedBox(height: 16),
