@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:rummy_tracker/players_section/players_screen.dart';
 import 'package:rummy_tracker/ranking_section/ranking_screen.dart';
 import 'package:rummy_tracker/components/team_credits_dialog.dart';
-import 'package:rummy_tracker/game_flow/phase_one_screen.dart';
+import 'package:rummy_tracker/game_flow/phase_one_selection.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});

@@ -21,9 +21,22 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
 
   Future<void> _loadPlayers() async {
     final players = await _playerService.loadPlayers();
+    final savedIds = await _playerService.loadSelectedPlayerIds();
+
     setState(() {
       _allPlayers = players;
+      if (savedIds.isEmpty && players.length >= 2) {
+        // Default to first two if nothing saved
+        _selectedPlayerIds.addAll(players.take(2).map((p) => p.id));
+        _saveSelection();
+      } else {
+        _selectedPlayerIds.addAll(savedIds);
+      }
     });
+  }
+
+  Future<void> _saveSelection() async {
+    await _playerService.saveSelectedPlayerIds(_selectedPlayerIds);
   }
 
   void _togglePlayer(String id) {
@@ -34,19 +47,55 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
         _selectedPlayerIds.add(id);
       }
     });
+    _saveSelection();
   }
 
   void _startGame() {
     if (_selectedPlayerIds.length < 2) return;
 
     // For now, just show a success message or navigate to a placeholder
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Game Started with Selected Players!',
-          style: TextStyle(fontFamily: 'serif'),
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.style_rounded, color: Colors.black, size: 20),
+              SizedBox(width: 12),
+              Text(
+                'Game Started! Good Luck!',
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF30E8BF),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          duration: const Duration(seconds: 2),
         ),
-        backgroundColor: Color(0xFF30E8BF),
+      );
+    }
+  }
+
+  Widget _getSuitIcon(int index) {
+    final suits = [
+      {'char': '♥', 'color': const Color(0xFFFF4D4D)},
+      {'char': '♦', 'color': const Color(0xFFFF4D4D)},
+      {'char': '♣', 'color': Colors.white70},
+      {'char': '♠', 'color': Colors.white70},
+    ];
+    final suit = suits[index % 4];
+    return Text(
+      suit['char'] as String,
+      style: TextStyle(
+        color: (suit['color'] as Color).withValues(alpha: 0.8),
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
       ),
     );
   }
@@ -71,8 +120,8 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.5),
-                    Colors.black.withOpacity(0.9),
+                    Colors.black.withValues(alpha: 0.5),
+                    Colors.black.withValues(alpha: 0.9),
                   ],
                 ),
               ),
@@ -97,7 +146,9 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                             color: Colors.white,
                           ),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.1),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.1,
+                            ),
                             padding: const EdgeInsets.all(12),
                           ),
                         ),
@@ -118,9 +169,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(
-                          width: 5,
-                        ), // Spacer to balance back button
+                        const SizedBox(width: 2), // Balancing spacer
                       ],
                     ),
                   ),
@@ -149,14 +198,14 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                             child: Text(
                               'NO PLAYERS FOUND',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha: 0.3),
                                 letterSpacing: 2,
                                 fontSize: 18,
                               ),
                             ),
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.only(bottom: 100),
+                            padding: const EdgeInsets.only(bottom: 120),
                             itemCount: _allPlayers.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 16),
@@ -174,21 +223,25 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                     duration: const Duration(milliseconds: 300),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 20,
-                                      vertical: 20,
+                                      vertical: 16,
                                     ),
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? const Color(
                                               0xFF30E8BF,
-                                            ).withOpacity(0.15)
-                                          : Colors.white.withOpacity(0.08),
+                                            ).withValues(alpha: 0.15)
+                                          : Colors.white.withValues(
+                                              alpha: 0.08,
+                                            ),
                                       borderRadius: BorderRadius.circular(24),
                                       border: Border.all(
                                         color: isSelected
                                             ? const Color(
                                                 0xFF30E8BF,
-                                              ).withOpacity(0.5)
-                                            : Colors.white.withOpacity(0.1),
+                                              ).withValues(alpha: 0.5)
+                                            : Colors.white.withValues(
+                                                alpha: 0.1,
+                                              ),
                                         width: isSelected ? 2 : 1,
                                       ),
                                       boxShadow: isSelected
@@ -196,7 +249,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                               BoxShadow(
                                                 color: const Color(
                                                   0xFF30E8BF,
-                                                ).withOpacity(0.2),
+                                                ).withValues(alpha: 0.2),
                                                 blurRadius: 15,
                                                 spreadRadius: -5,
                                               ),
@@ -205,50 +258,82 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                     ),
                                     child: Row(
                                       children: [
-                                        AnimatedContainer(
-                                          duration: const Duration(
-                                            milliseconds: 300,
-                                          ),
-                                          width: 48,
-                                          height: 48,
+                                        // Card Suit Badge
+                                        Container(
+                                          width: 54,
+                                          height: 54,
                                           decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? const Color(0xFF30E8BF)
-                                                : Colors.white.withOpacity(0.1),
-                                            shape: BoxShape.circle,
+                                            color: Colors.black.withValues(
+                                              alpha: 0.3,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.05,
+                                              ),
+                                            ),
                                           ),
-                                          child: Icon(
-                                            isSelected
-                                                ? Icons.check_rounded
-                                                : Icons.person_outline_rounded,
-                                            color: isSelected
-                                                ? Colors.black
-                                                : Colors.white54,
+                                          child: Center(
+                                            child: _getSuitIcon(index),
                                           ),
                                         ),
                                         const SizedBox(width: 20),
                                         Expanded(
-                                          child: Text(
-                                            player.name,
-                                            style: TextStyle(
-                                              color: isSelected
-                                                  ? Colors.white
-                                                  : Colors.white70,
-                                              fontSize: 22,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.w900
-                                                  : FontWeight.bold,
-                                              fontFamily: 'serif',
-                                              letterSpacing: 1,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                player.name.toUpperCase(),
+                                                style: TextStyle(
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : Colors.white70,
+                                                  fontSize: 20,
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.w900
+                                                      : FontWeight.bold,
+                                                  fontFamily: 'serif',
+                                                  letterSpacing: 2,
+                                                ),
+                                              ),
+                                              Text(
+                                                'PLAYER ${index + 1}',
+                                                style: TextStyle(
+                                                  color: isSelected
+                                                      ? const Color(
+                                                          0xFF30E8BF,
+                                                        ).withValues(alpha: 0.6)
+                                                      : Colors.white24,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  letterSpacing: 1,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        AnimatedScale(
+                                          scale: isSelected ? 1.0 : 0.0,
+                                          duration: const Duration(
+                                            milliseconds: 300,
+                                          ),
+                                          curve: Curves.easeOutBack,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF30E8BF),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.check_rounded,
+                                              color: Colors.black,
+                                              size: 16,
                                             ),
                                           ),
                                         ),
-                                        if (isSelected)
-                                          const Icon(
-                                            Icons.star_rounded,
-                                            color: Color(0xFF30E8BF),
-                                            size: 20,
-                                          ),
                                       ],
                                     ),
                                   ),
@@ -282,12 +367,16 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                               colors: [Color(0xFF30E8BF), Color(0xFF2BCCDF)],
                             )
                           : null,
-                      color: canStart ? null : Colors.white.withOpacity(0.05),
+                      color: canStart
+                          ? null
+                          : Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: canStart
                           ? [
                               BoxShadow(
-                                color: const Color(0xFF30E8BF).withOpacity(0.3),
+                                color: const Color(
+                                  0xFF30E8BF,
+                                ).withValues(alpha: 0.3),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),

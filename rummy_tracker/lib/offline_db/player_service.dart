@@ -21,6 +21,7 @@ class Player {
 
 class PlayerService {
   static const String _storageKey = 'rummy_players';
+  static const String _selectionKey = 'rummy_selected_ids';
 
   Future<List<Player>> loadPlayers() async {
     final prefs = await SharedPreferences.getInstance();
@@ -106,5 +107,16 @@ class PlayerService {
         .toList();
     await savePlayers(updatedList);
     return updatedList;
+  }
+
+  Future<void> saveSelectedPlayerIds(Set<String> ids) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_selectionKey, ids.toList());
+  }
+
+  Future<Set<String>> loadSelectedPlayerIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? ids = prefs.getStringList(_selectionKey);
+    return ids?.toSet() ?? {};
   }
 }
