@@ -64,6 +64,22 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     return _currentPlayerIndex == widget.selectedPlayers.length - 1;
   }
 
+  String? _getWinningPlayerId(Map<String, int> totals) {
+    if (totals.isEmpty || _rounds.isEmpty) return null;
+    
+    String? winnerId;
+    int lowestScore = 0;
+    
+    totals.forEach((playerId, score) {
+      if (winnerId == null || score < lowestScore) {
+        lowestScore = score;
+        winnerId = playerId;
+      }
+    });
+    
+    return winnerId;
+  }
+
   Map<String, int> _getTotals() {
     final Map<String, int> totals = {};
     for (var player in widget.selectedPlayers) {
@@ -278,21 +294,25 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     );
   }
 
-  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0, bool isHighlighted = false}) {
+  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0, bool isHighlighted = false, bool isWinner = false}) {
     final isNegative = total < 0;
     return Container(
       height: height,
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isHighlighted
-            ? const Color(0xFF30E8BF).withValues(alpha: 0.2)
-            : Colors.white.withValues(alpha: 0.03),
+        color: isWinner
+            ? const Color(0xFFFFD700).withValues(alpha: 0.2)
+            : (isHighlighted
+                ? const Color(0xFF30E8BF).withValues(alpha: 0.2)
+                : Colors.white.withValues(alpha: 0.03)),
         borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
         border: Border.all(
-          color: isHighlighted
-              ? const Color(0xFF30E8BF).withValues(alpha: 0.6)
-              : Colors.white.withValues(alpha: 0.05),
-          width: isHighlighted ? 2 : 1,
+          color: isWinner
+              ? const Color(0xFFFFD700).withValues(alpha: 0.8)
+              : (isHighlighted
+                  ? const Color(0xFF30E8BF).withValues(alpha: 0.6)
+                  : Colors.white.withValues(alpha: 0.05)),
+          width: (isWinner || isHighlighted) ? 2 : 1,
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -300,23 +320,41 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              player.name.toUpperCase(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: isHighlighted ? Colors.white : Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'serif',
-              ),
+            child: Row(
+              children: [
+                if (isWinner) ...[
+                  const Icon(
+                    Icons.emoji_events_rounded,
+                    color: Color(0xFFFFD700),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
+                  child: Text(
+                    player.name.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: isWinner
+                          ? const Color(0xFFFFD700)
+                          : (isHighlighted ? Colors.white : Colors.white70),
+                      fontSize: 12,
+                      fontWeight: isWinner ? FontWeight.w900 : FontWeight.bold,
+                      fontFamily: 'serif',
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
           Text(
             '$total',
             style: TextStyle(
-              color: isNegative ? const Color(0xFF30E8BF) : Colors.white,
+              color: isWinner
+                  ? const Color(0xFFFFD700)
+                  : (isNegative ? const Color(0xFF30E8BF) : Colors.white),
               fontSize: 16,
               fontWeight: FontWeight.bold,
               fontFamily: 'monospace',
@@ -477,6 +515,10 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                         final player = widget.selectedPlayers[i];
                                         final total = totals[player.id] ?? 0;
                                         final isHighlighted = _isInputExpanded && i == _currentPlayerIndex;
+                                        final winningPlayerId = _getWinningPlayerId(totals);
+                                        final isWinner = !_isInputExpanded && 
+                                                         _rounds.isNotEmpty && 
+                                                         winningPlayerId == player.id;
                                         return GestureDetector(
                                           onTap: () {
                                             if (_isInputExpanded) {
@@ -490,6 +532,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                             total,
                                             height: rowHeight,
                                             isHighlighted: isHighlighted,
+                                            isWinner: isWinner,
                                           ),
                                         );
                                       },
@@ -754,31 +797,35 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          // ADD POINT or FINISH ROUND Button
+                          // ADD POINT or COMPLETE ROUND Button
                           Expanded(
                             flex: 2,
                             child: ElevatedButton(
                               onPressed: _isOnLastPlayer() ? _finishRound : _addPoint,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF30E8BF),
-                                foregroundColor: Colors.black,
+                                backgroundColor: _isOnLastPlayer()
+                                    ? const Color(0xFFFFD700) // Gold
+                                    : const Color(0xFF30E8BF),
+                                foregroundColor: _isOnLastPlayer() ? Colors.black : Colors.black,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 elevation: 8,
-                                shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
+                                shadowColor: _isOnLastPlayer()
+                                    ? const Color(0xFFFFD700).withValues(alpha: 0.5)
+                                    : const Color(0xFF30E8BF).withValues(alpha: 0.5),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    _isOnLastPlayer() ? Icons.check_rounded : Icons.add_rounded,
+                                    _isOnLastPlayer() ? Icons.check_circle_rounded : Icons.add_rounded,
                                     size: 20,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    _isOnLastPlayer() ? 'FINISH' : 'ADD POINT',
+                                    _isOnLastPlayer() ? 'COMPLETE' : 'ADD POINT',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 2,
@@ -825,14 +872,34 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                         ),
                       ),
                       if (_rounds.isNotEmpty) ...[
-                        const SizedBox(width: 16),
-                        IconButton(
-                          onPressed: _declareWinner,
-                          icon: const Icon(Icons.emoji_events_rounded),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withValues(alpha: 0.1),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.all(20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _declareWinner,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFFD700), // Gold
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 8,
+                              shadowColor: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.emoji_events_rounded, size: 24),
+                                SizedBox(width: 8),
+                                Text(
+                                  'FINISH',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
