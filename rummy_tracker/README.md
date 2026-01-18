@@ -1,6 +1,6 @@
-# rummy_tracker
+# Rummy Tracker
 
-A new Flutter project.
+Track your Rummy card game scores and rankings.
 
 ## Getting Started
 
