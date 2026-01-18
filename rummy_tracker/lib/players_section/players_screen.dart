@@ -117,81 +117,89 @@ class _PlayersScreenState extends State<PlayersScreen> {
                 children: [
                   const SizedBox(height: 20),
                   // Header
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.1),
-                          padding: const EdgeInsets.all(12),
-                        ),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          'PLAYERS',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
+                  _AnimatedEntry(
+                    delay: 0,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
                             color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 4,
-                            fontFamily: 'serif',
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white.withOpacity(0.1),
+                            padding: const EdgeInsets.all(12),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 48), // Balancing the back button
-                    ],
+                        const Expanded(
+                          child: Text(
+                            'PLAYERS',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 4,
+                              fontFamily: 'serif',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 48),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 40),
 
                   // Input Section
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.04),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _nameController,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'serif',
-                              fontSize: 18,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'ENTER NAME',
-                              hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.3),
-                                letterSpacing: 2,
+                  _AnimatedEntry(
+                    delay: 200,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _nameController,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'serif',
+                                fontSize: 18,
                               ),
-                              border: InputBorder.none,
+                              decoration: InputDecoration(
+                                hintText: 'Enter Name',
+                                hintStyle: TextStyle(
+                                  color: Colors.white.withOpacity(0.3),
+                                  letterSpacing: 2,
+                                ),
+                                border: InputBorder.none,
+                              ),
+                              onSubmitted: (_) => _addPlayer(),
                             ),
-                            onSubmitted: (_) => _addPlayer(),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        IconButton(
-                          onPressed: _addPlayer,
-                          icon: const Icon(
-                            Icons.add_rounded,
-                            color: Colors.white,
+                          const SizedBox(width: 12),
+                          IconButton(
+                            onPressed: _addPlayer,
+                            icon: const Icon(
+                              Icons.add_rounded,
+                              color: Colors.white,
+                            ),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(
+                                0xFF30E8BF,
+                              ).withOpacity(0.8),
+                              padding: const EdgeInsets.all(12),
+                            ),
                           ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: const Color(
-                              0xFF30E8BF,
-                            ).withOpacity(0.8),
-                            padding: const EdgeInsets.all(12),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -204,67 +212,70 @@ class _PlayersScreenState extends State<PlayersScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
                         final player = _players[index];
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.04),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.08),
+                        return _AnimatedEntry(
+                          delay: 400 + (index * 100),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    (index + 1).toString(),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.15),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      (index + 1).toString(),
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  player.name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'serif',
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    player.name,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'serif',
+                                    ),
                                   ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.edit_rounded,
-                                  color: Colors.blue.withOpacity(0.7),
-                                  size: 20,
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.edit_rounded,
+                                    color: Colors.blue.withOpacity(0.7),
+                                    size: 20,
+                                  ),
+                                  onPressed: () => _editPlayer(player),
                                 ),
-                                onPressed: () => _editPlayer(player),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.delete_outline_rounded,
-                                  color: Colors.red.withOpacity(0.7),
-                                  size: 20,
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: Colors.red.withOpacity(0.7),
+                                    size: 20,
+                                  ),
+                                  onPressed: () => _removePlayer(player.id),
                                 ),
-                                onPressed: () => _removePlayer(player.id),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -385,6 +396,32 @@ class _PlayersScreenState extends State<PlayersScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _AnimatedEntry extends StatelessWidget {
+  final Widget child;
+  final int delay;
+
+  const _AnimatedEntry({required this.child, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 30 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

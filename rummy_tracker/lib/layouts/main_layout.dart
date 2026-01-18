@@ -1,8 +1,41 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:rummy_tracker/players_section/players_screen.dart';
+import 'package:rummy_tracker/ranking_section/ranking_screen.dart';
+import 'package:rummy_tracker/components/team_credits_dialog.dart';
 
-class MainMenuScreen extends StatelessWidget {
+class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
+
+  @override
+  State<MainMenuScreen> createState() => _MainMenuScreenState();
+}
+
+class _MainMenuScreenState extends State<MainMenuScreen> {
+  Timer? _easterEggTimer;
+
+  @override
+  void dispose() {
+    _easterEggTimer?.cancel();
+    super.dispose();
+  }
+
+  void _showEasterEgg() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Team Credits',
+      barrierColor: Colors.black87,
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (context, anim1, anim2) => const TeamCreditsDialog(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return ScaleTransition(
+          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+          child: FadeTransition(opacity: anim1, child: child),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,8 +149,40 @@ class MainMenuScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => const PlayersScreen(),
+                                PageRouteBuilder(
+                                  pageBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                      ) => const PlayersScreen(),
+                                  transitionsBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                        child,
+                                      ) {
+                                        var curve = Curves.easeOutCubic;
+                                        var curvedAnimation = CurvedAnimation(
+                                          parent: animation,
+                                          curve: curve,
+                                        );
+
+                                        return FadeTransition(
+                                          opacity: curvedAnimation,
+                                          child: ScaleTransition(
+                                            scale: Tween<double>(
+                                              begin: 0.95,
+                                              end: 1.0,
+                                            ).animate(curvedAnimation),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                  transitionDuration: const Duration(
+                                    milliseconds: 600,
+                                  ),
                                 ),
                               );
                             },
@@ -128,13 +193,80 @@ class MainMenuScreen extends StatelessWidget {
                             icon: Icons.leaderboard_rounded,
                             color: const Color(0xFF30E8BF),
                             onTap: () {
-                              // TODO: Navigate to leaderboards
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  pageBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                      ) => const RankingScreen(),
+                                  transitionsBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                        child,
+                                      ) {
+                                        var curve = Curves.easeOutCubic;
+                                        var curvedAnimation = CurvedAnimation(
+                                          parent: animation,
+                                          curve: curve,
+                                        );
+
+                                        return FadeTransition(
+                                          opacity: curvedAnimation,
+                                          child: ScaleTransition(
+                                            scale: Tween<double>(
+                                              begin: 0.95,
+                                              end: 1.0,
+                                            ).animate(curvedAnimation),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                  transitionDuration: const Duration(
+                                    milliseconds: 600,
+                                  ),
+                                ),
+                              );
                             },
                           ),
                         ],
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+          ),
+          // Version Info (Static)
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: GestureDetector(
+              onLongPressStart: (_) {
+                _easterEggTimer = Timer(const Duration(seconds: 1), () {
+                  if (mounted) {
+                    _showEasterEgg();
+                  }
+                });
+              },
+              onLongPressEnd: (_) {
+                _easterEggTimer?.cancel();
+              },
+              onLongPressCancel: () {
+                _easterEggTimer?.cancel();
+              },
+              child: Text(
+                'Rummy Tracker v1.0.0',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.24),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 1,
+                  fontFamily: 'serif',
                 ),
               ),
             ),
