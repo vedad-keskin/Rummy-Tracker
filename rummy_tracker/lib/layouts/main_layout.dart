@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:rummy_tracker/players_section/players_screen.dart';
 import 'package:rummy_tracker/ranking_section/ranking_screen.dart';
 import 'package:rummy_tracker/components/team_credits_dialog.dart';
+import 'package:rummy_tracker/game_flow/phase_one_screen.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -138,7 +139,44 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                             icon: Icons.play_arrow_rounded,
                             color: const Color.fromARGB(255, 255, 1, 1),
                             onTap: () {
-                              // TODO: Navigate to game setup
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  pageBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                      ) => const PhaseOneScreen(),
+                                  transitionsBuilder:
+                                      (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                        child,
+                                      ) {
+                                        var curve = Curves.easeOutCubic;
+                                        var curvedAnimation = CurvedAnimation(
+                                          parent: animation,
+                                          curve: curve,
+                                        );
+
+                                        return FadeTransition(
+                                          opacity: curvedAnimation,
+                                          child: ScaleTransition(
+                                            scale: Tween<double>(
+                                              begin: 0.95,
+                                              end: 1.0,
+                                            ).animate(curvedAnimation),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                  transitionDuration: const Duration(
+                                    milliseconds: 600,
+                                  ),
+                                ),
+                              );
                             },
                           ),
                           const SizedBox(height: 16),
