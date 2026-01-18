@@ -20,8 +20,8 @@ class _RankingScreenState extends State<RankingScreen> {
 
   Future<void> _loadData() async {
     final players = await _playerService.loadPlayers();
-    // Sort by points descending
-    players.sort((a, b) => b.points.compareTo(a.points));
+    // Sort by wins descending
+    players.sort((a, b) => b.wins.compareTo(a.wins));
     if (mounted) {
       setState(() {
         _players = players;
@@ -46,7 +46,7 @@ class _RankingScreenState extends State<RankingScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'RESET POINTS?',
+                'RESET WINS?',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -57,7 +57,7 @@ class _RankingScreenState extends State<RankingScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'This will clear all player scores. This action cannot be undone.',
+                'This will clear all player win records. This action cannot be undone.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.7),
@@ -108,7 +108,7 @@ class _RankingScreenState extends State<RankingScreen> {
     );
 
     if (confirm == true) {
-      final updatedPlayers = await _playerService.resetPlayersPoints(_players);
+      final updatedPlayers = await _playerService.resetPlayersWins(_players);
       if (mounted) {
         setState(() {
           _players = updatedPlayers;
@@ -218,14 +218,18 @@ class _RankingScreenState extends State<RankingScreen> {
 
                               Color rankColor = Colors.white70;
                               double scale = 1.0;
+                              IconData? trophyIcon;
 
                               if (rank == 1) {
                                 rankColor = const Color(0xFFFFD700); // Gold
                                 scale = 1.05;
+                                trophyIcon = Icons.emoji_events_rounded;
                               } else if (rank == 2) {
                                 rankColor = const Color(0xFFC0C0C0); // Silver
+                                trophyIcon = Icons.emoji_events_rounded;
                               } else if (rank == 3) {
                                 rankColor = const Color(0xFFCD7F32); // Bronze
+                                trophyIcon = Icons.emoji_events_rounded;
                               }
 
                               return _AnimatedEntry(
@@ -251,26 +255,51 @@ class _RankingScreenState extends State<RankingScreen> {
                                     ),
                                     child: Row(
                                       children: [
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: rankColor.withOpacity(0.1),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: rankColor.withOpacity(0.2),
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              rank.toString(),
-                                              style: TextStyle(
-                                                color: rankColor,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
+                                        Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Container(
+                                              width: 48,
+                                              height: 48,
+                                              decoration: BoxDecoration(
+                                                color: rankColor.withOpacity(
+                                                  0.1,
+                                                ),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: rankColor.withOpacity(
+                                                    0.2,
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  rank.toString(),
+                                                  style: TextStyle(
+                                                    color: rankColor,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                  ),
+                                                ),
                                               ),
                                             ),
-                                          ),
+                                            if (trophyIcon != null)
+                                              Positioned(
+                                                top: -6,
+                                                right: -3,
+                                                child: Icon(
+                                                  trophyIcon,
+                                                  color: rankColor,
+                                                  size: 20,
+                                                  shadows: [
+                                                    Shadow(
+                                                      color: Colors.black45,
+                                                      blurRadius: 8,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                         const SizedBox(width: 16),
                                         Expanded(
@@ -289,7 +318,7 @@ class _RankingScreenState extends State<RankingScreen> {
                                               CrossAxisAlignment.end,
                                           children: [
                                             Text(
-                                              '${player.points}',
+                                              '${player.wins}',
                                               style: TextStyle(
                                                 color: rankColor,
                                                 fontSize: 24,
@@ -298,13 +327,13 @@ class _RankingScreenState extends State<RankingScreen> {
                                               ),
                                             ),
                                             Text(
-                                              'POINTS',
+                                              'WINS',
                                               style: TextStyle(
                                                 color: rankColor.withOpacity(
                                                   0.5,
                                                 ),
                                                 fontSize: 10,
-                                                letterSpacing: 1,
+                                                letterSpacing: 2,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),

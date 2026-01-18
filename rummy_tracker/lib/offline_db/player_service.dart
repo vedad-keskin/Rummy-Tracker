@@ -4,17 +4,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 class Player {
   final String id;
   final String name;
-  final int points;
+  final int wins;
 
-  Player({required this.id, required this.name, this.points = 0});
+  Player({required this.id, required this.name, this.wins = 0});
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'points': points};
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'wins': wins};
 
   factory Player.fromJson(Map<String, dynamic> json) {
     return Player(
       id: json['id'] as String,
       name: json['name'] as String,
-      points: (json['points'] as int?) ?? 0,
+      wins: (json['wins'] as int?) ?? (json['points'] as int?) ?? 0,
     );
   }
 }
@@ -48,7 +48,7 @@ class PlayerService {
   }
 
   Future<List<Player>> _saveDefaultPlayer() async {
-    final defaultPlayer = Player(id: '1', name: 'Vedo', points: 0);
+    final defaultPlayer = Player(id: '1', name: 'Vedo', wins: 0);
     await savePlayers([defaultPlayer]);
     return [defaultPlayer];
   }
@@ -66,7 +66,7 @@ class PlayerService {
     final newPlayer = Player(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
-      points: 0,
+      wins: 0,
     );
     final updatedList = [...currentPlayers, newPlayer];
     await savePlayers(updatedList);
@@ -92,7 +92,7 @@ class PlayerService {
   ) async {
     final updatedList = currentPlayers.map((p) {
       if (p.id == id) {
-        return Player(id: id, name: newName, points: p.points);
+        return Player(id: id, name: newName, wins: p.wins);
       }
       return p;
     }).toList();
@@ -100,9 +100,9 @@ class PlayerService {
     return updatedList;
   }
 
-  Future<List<Player>> resetPlayersPoints(List<Player> currentPlayers) async {
+  Future<List<Player>> resetPlayersWins(List<Player> currentPlayers) async {
     final updatedList = currentPlayers
-        .map((p) => Player(id: p.id, name: p.name, points: 0))
+        .map((p) => Player(id: p.id, name: p.name, wins: 0))
         .toList();
     await savePlayers(updatedList);
     return updatedList;
