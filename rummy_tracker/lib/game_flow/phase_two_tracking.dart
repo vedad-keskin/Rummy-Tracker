@@ -13,7 +13,9 @@ class PhaseTwoTrackingScreen extends StatefulWidget {
 
 class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   final List<Map<String, int>> _rounds = [];
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _verticalController = ScrollController();
+  final ScrollController _totalVerticalController = ScrollController();
+  final ScrollController _horizontalController = ScrollController();
 
   Map<String, int> _getTotals() {
     final Map<String, int> totals = {};
@@ -42,9 +44,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
       });
       // Scroll to bottom
       Future.delayed(const Duration(milliseconds: 100), () {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
+        if (_verticalController.hasClients) {
+          _verticalController.animateTo(
+            _verticalController.position.maxScrollExtent,
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeOut,
           );
@@ -56,7 +58,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   void _declareWinner() {
     final totals = _getTotals();
     String? winnerId;
-    int maxNegative = 1; // Start with something higher than any possible win
+    int maxNegative = 1;
 
     totals.forEach((playerId, score) {
       if (winnerId == null || score < maxNegative) {
@@ -74,6 +76,83 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
         ),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    _totalVerticalController.dispose();
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildHeaderCell(
+    String text, {
+    bool isLeft = false,
+    bool isRight = false,
+  }) {
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.horizontal(
+          left: isLeft ? const Radius.circular(20) : Radius.zero,
+          right: isRight ? const Radius.circular(20) : Radius.zero,
+        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.3),
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+            fontFamily: 'serif',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRowCell(
+    String text, {
+    double height = 52.0,
+    bool isName = false,
+    bool isTotal = false,
+    bool isNegative = false,
+  }) {
+    return Container(
+      height: height,
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: isTotal
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.white.withValues(alpha: 0.03),
+        borderRadius: isName
+            ? const BorderRadius.horizontal(left: Radius.circular(16))
+            : (isTotal
+                  ? const BorderRadius.horizontal(right: Radius.circular(16))
+                  : BorderRadius.zero),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Center(
+        child: Text(
+          text.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: isNegative
+                ? const Color(0xFF30E8BF)
+                : (isName ? Colors.white70 : Colors.white),
+            fontSize: isTotal ? 16 : 12,
+            fontWeight: isTotal || isName ? FontWeight.bold : FontWeight.normal,
+            fontFamily: isTotal ? 'monospace' : 'serif',
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -133,138 +212,249 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48), // Balance
+                      const SizedBox(width: 48),
                     ],
                   ),
                 ),
 
-                // Player Totals Header
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Row(
-                    children: widget.selectedPlayers.map((player) {
-                      final score = totals[player.id] ?? 0;
-                      return Expanded(
-                        child: Column(
+                // Master Grid (Inverted: Players as Rows, Rounds as Columns)
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const double nameWidth = 100.0;
+                      const double totalWidth = 80.0;
+                      const double roundWidth = 70.0;
+                      const double headerHeight = 60.0;
+                      const double rowHeight = 52.0;
+                      final double sidePadding = 12.0;
+
+                      final int playerCount = widget.selectedPlayers.length;
+                      final int roundCount = _rounds.length;
+                      final double scrollableWidth = roundCount * roundWidth;
+
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: sidePadding),
+                        child: Row(
                           children: [
-                            Text(
-                              player.name.toUpperCase(),
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
+                            // 1. Fixed Left: Player Names
+                            SizedBox(
+                              width: nameWidth,
+                              child: Column(
+                                children: [
+                                  _buildHeaderCell('PLAYERS', isLeft: true),
+                                  const SizedBox(height: 16),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      controller: _verticalController,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: playerCount,
+                                      itemBuilder: (context, i) =>
+                                          _buildRowCell(
+                                            widget.selectedPlayers[i].name,
+                                            isName: true,
+                                            height: rowHeight,
+                                          ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '$score',
-                              style: TextStyle(
-                                color: score < 0
-                                    ? const Color(0xFF30E8BF)
-                                    : Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                fontFamily: 'monospace',
+
+                            // 2. Scrollable Middle: Round Scores
+                            Expanded(
+                              child: SingleChildScrollView(
+                                controller: _horizontalController,
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: scrollableWidth.clamp(
+                                    constraints.maxWidth -
+                                        nameWidth -
+                                        totalWidth -
+                                        10,
+                                    2000,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      // Rounds Header Row
+                                      SizedBox(
+                                        height: headerHeight,
+                                        child: Row(
+                                          children: List.generate(roundCount, (
+                                            index,
+                                          ) {
+                                            return SizedBox(
+                                              width: roundWidth,
+                                              child: Center(
+                                                child: Text(
+                                                  'R${index + 1}',
+                                                  style: TextStyle(
+                                                    color: Colors.white
+                                                        .withValues(alpha: 0.3),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      // Scores Body
+                                      Expanded(
+                                        child: _rounds.isEmpty
+                                            ? Center(
+                                                child: Text(
+                                                  'NO ROUNDS',
+                                                  style: TextStyle(
+                                                    color: Colors.white
+                                                        .withValues(alpha: 0.1),
+                                                    letterSpacing: 2,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              )
+                                            : ListView.builder(
+                                                itemCount: playerCount,
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 120,
+                                                ),
+                                                itemBuilder: (context, pIndex) {
+                                                  // Master Synchronizer
+                                                  return NotificationListener<
+                                                    ScrollNotification
+                                                  >(
+                                                    onNotification: (notification) {
+                                                      if (notification
+                                                          is ScrollUpdateNotification) {
+                                                        _verticalController
+                                                            .jumpTo(
+                                                              notification
+                                                                  .metrics
+                                                                  .pixels,
+                                                            );
+                                                        _totalVerticalController
+                                                            .jumpTo(
+                                                              notification
+                                                                  .metrics
+                                                                  .pixels,
+                                                            );
+                                                      }
+                                                      return false;
+                                                    },
+                                                    child: Container(
+                                                      height: rowHeight,
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                            bottom: 8,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white
+                                                            .withValues(
+                                                              alpha: 0.03,
+                                                            ),
+                                                        border: Border(
+                                                          top: BorderSide(
+                                                            color: Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.05,
+                                                                ),
+                                                          ),
+                                                          bottom: BorderSide(
+                                                            color: Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.05,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      child: Row(
+                                                        children: List.generate(roundCount, (
+                                                          rIndex,
+                                                        ) {
+                                                          final player = widget
+                                                              .selectedPlayers[pIndex];
+                                                          final score =
+                                                              _rounds[rIndex][player
+                                                                  .id] ??
+                                                              0;
+                                                          return SizedBox(
+                                                            width: roundWidth,
+                                                            child: Center(
+                                                              child: Text(
+                                                                score == 0
+                                                                    ? '0'
+                                                                    : (score > 0
+                                                                          ? '+$score'
+                                                                          : '$score'),
+                                                                style: TextStyle(
+                                                                  color:
+                                                                      score < 0
+                                                                      ? const Color(
+                                                                          0xFF30E8BF,
+                                                                        )
+                                                                      : Colors.white.withValues(
+                                                                          alpha:
+                                                                              0.7,
+                                                                        ),
+                                                                  fontSize: 15,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontFamily:
+                                                                      'monospace',
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        }),
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // 3. Fixed Right: Totals
+                            SizedBox(
+                              width: totalWidth,
+                              child: Column(
+                                children: [
+                                  _buildHeaderCell('TOTAL', isRight: true),
+                                  const SizedBox(height: 16),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      controller: _totalVerticalController,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: playerCount,
+                                      itemBuilder: (context, i) {
+                                        final player =
+                                            widget.selectedPlayers[i];
+                                        final score = totals[player.id] ?? 0;
+                                        return _buildRowCell(
+                                          '$score',
+                                          height: rowHeight,
+                                          isTotal: true,
+                                          isNegative: score < 0,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Rounds List/Grid
-                Expanded(
-                  child: _rounds.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.style_outlined,
-                                color: Colors.white.withValues(alpha: 0.1),
-                                size: 64,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'NO ROUNDS YET',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  letterSpacing: 2,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-                          itemCount: _rounds.length,
-                          itemBuilder: (context, index) {
-                            final round = _rounds[index];
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.03),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 16),
-                                    child: Text(
-                                      'R${index + 1}',
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  ...widget.selectedPlayers.map((player) {
-                                    final score = round[player.id] ?? 0;
-                                    return Expanded(
-                                      child: Center(
-                                        child: Text(
-                                          score > 0 ? '+$score' : '$score',
-                                          style: TextStyle(
-                                            color: score < 0
-                                                ? const Color(0xFF30E8BF)
-                                                : Colors.white.withValues(
-                                                    alpha: 0.7,
-                                                  ),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: 'monospace',
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
                 ),
               ],
             ),
@@ -407,26 +597,24 @@ class _PointInputDialogState extends State<PointInputDialog> {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'ROUND SCORES',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 4,
-                fontFamily: 'serif',
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'ROUND SCORES',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 4,
+                  fontFamily: 'serif',
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            // Current Player Indicator
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ...widget.players.asMap().entries.map((entry) {
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: widget.players.asMap().entries.map((entry) {
                   final index = entry.key;
                   final isCurrent = index == _currentPlayerIndex;
                   return Container(
@@ -440,112 +628,106 @@ class _PointInputDialogState extends State<PointInputDialog> {
                       shape: BoxShape.circle,
                     ),
                   );
-                }),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-            Text(
-              currentPlayer.name.toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'serif',
+                }).toList(),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            TextField(
-              controller: _controllers[currentPlayer.id],
-              keyboardType: TextInputType.numberWithOptions(signed: true),
-              textAlign: TextAlign.center,
-              autofocus: true,
-              style: const TextStyle(
-                color: Color(0xFF30E8BF),
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'monospace',
-              ),
-              decoration: InputDecoration(
-                hintText: '0',
-                hintStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.1),
+              const SizedBox(height: 24),
+              Text(
+                currentPlayer.name.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'serif',
                 ),
-                border: InputBorder.none,
               ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Presets Row 1: -40, -140, -500
-            Row(
-              children: [
-                _buildPresetButton(-40, label: '-40'),
-                const SizedBox(width: 8),
-                _buildPresetButton(-140, label: '-140'),
-                const SizedBox(width: 8),
-                _buildPresetButton(-500, label: 'RUMMY', isSpecial: true),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Presets Row 2: +0, +5, +100, +200
-            Row(
-              children: [
-                _buildPresetButton(0),
-                const SizedBox(width: 8),
-                _buildPresetButton(5),
-                const SizedBox(width: 8),
-                _buildPresetButton(100),
-                const SizedBox(width: 8),
-                _buildPresetButton(200),
-              ],
-            ),
-
-            const SizedBox(height: 40),
-
-            Row(
-              children: [
-                if (_currentPlayerIndex > 0)
+              const SizedBox(height: 16),
+              TextField(
+                controller: _controllers[currentPlayer.id],
+                keyboardType: const TextInputType.numberWithOptions(
+                  signed: true,
+                ),
+                textAlign: TextAlign.center,
+                autofocus: true,
+                style: const TextStyle(
+                  color: Color(0xFF30E8BF),
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'monospace',
+                ),
+                decoration: InputDecoration(
+                  hintText: '0',
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                  border: InputBorder.none,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  _buildPresetButton(-40, label: '-40'),
+                  const SizedBox(width: 8),
+                  _buildPresetButton(-140, label: '-140'),
+                  const SizedBox(width: 8),
+                  _buildPresetButton(-500, label: 'RUMMY', isSpecial: true),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildPresetButton(0),
+                  const SizedBox(width: 8),
+                  _buildPresetButton(5),
+                  const SizedBox(width: 8),
+                  _buildPresetButton(100),
+                  const SizedBox(width: 8),
+                  _buildPresetButton(200),
+                ],
+              ),
+              const SizedBox(height: 40),
+              Row(
+                children: [
+                  if (_currentPlayerIndex > 0)
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => setState(() => _currentPlayerIndex--),
+                        child: Text(
+                          'BACK',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                    ),
                   Expanded(
-                    child: TextButton(
-                      onPressed: () => setState(() => _currentPlayerIndex--),
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: _currentPlayerIndex < widget.players.length - 1
+                          ? () => setState(() => _currentPlayerIndex++)
+                          : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: Text(
-                        'BACK',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
+                        _currentPlayerIndex < widget.players.length - 1
+                            ? 'NEXT PLAYER'
+                            : 'SAVE ROUND',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
                         ),
                       ),
                     ),
                   ),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: _currentPlayerIndex < widget.players.length - 1
-                        ? () => setState(() => _currentPlayerIndex++)
-                        : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.1),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: Text(
-                      _currentPlayerIndex < widget.players.length - 1
-                          ? 'NEXT PLAYER'
-                          : 'SAVE ROUND',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
