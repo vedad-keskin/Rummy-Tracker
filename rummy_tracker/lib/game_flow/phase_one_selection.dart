@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
+import 'package:rummy_tracker/game_flow/phase_two_tracking.dart';
 
 class PhaseOneScreen extends StatefulWidget {
   const PhaseOneScreen({super.key});
@@ -69,30 +70,16 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
   void _startGame() {
     if (_selectedPlayerIds.length < 2) return;
 
-    // For now, just show a success message or navigate to a placeholder
+    final selectedPlayers = _allPlayers
+        .where((p) => _selectedPlayerIds.contains(p.id))
+        .toList();
+
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.style_rounded, color: Colors.black, size: 20),
-              SizedBox(width: 12),
-              Text(
-                'GAME STARTED! GOOD LUCK!',
-                style: TextStyle(
-                  fontFamily: 'serif',
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: const Color(0xFF30E8BF),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          duration: const Duration(seconds: 2),
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              PhaseTwoTrackingScreen(selectedPlayers: selectedPlayers),
         ),
       );
     }

@@ -109,6 +109,17 @@ class PlayerService {
     return updatedList;
   }
 
+  Future<void> incrementWin(String id) async {
+    final players = await loadPlayers();
+    final updatedList = players.map((p) {
+      if (p.id == id) {
+        return Player(id: p.id, name: p.name, wins: p.wins + 1);
+      }
+      return p;
+    }).toList();
+    await savePlayers(updatedList);
+  }
+
   Future<void> saveSelectedPlayerIds(Set<String> ids) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_selectionKey, ids.toList());
