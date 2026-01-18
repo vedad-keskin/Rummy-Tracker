@@ -18,12 +18,45 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   final Map<String, TextEditingController> _scoreControllers = {};
   int _currentPlayerIndex = 0;
   bool _isInputExpanded = false;
+  int? _highlightedPreset;
+  Map<String, int>? _currentRound;
 
   @override
   void initState() {
     super.initState();
     for (var player in widget.selectedPlayers) {
-      _scoreControllers[player.id] = TextEditingController(text: '0');
+      final controller = TextEditingController(text: '0');
+      _scoreControllers[player.id] = controller;
+      // Add listener to update round in real-time
+      controller.addListener(() {
+        _updateCurrentRound();
+      });
+    }
+  }
+
+  void _updateCurrentRound() {
+    if (!_isInputExpanded) return;
+    
+    final Map<String, int> roundScores = {};
+    bool hasAnyScore = false;
+
+    for (var player in widget.selectedPlayers) {
+      final value = int.tryParse(_scoreControllers[player.id]!.text) ?? 0;
+      roundScores[player.id] = value;
+      if (value != 0) {
+        hasAnyScore = true;
+      }
+    }
+
+    // Only create/update current round if at least one score is entered
+    if (hasAnyScore) {
+      setState(() {
+        _currentRound = roundScores;
+      });
+    } else {
+      setState(() {
+        _currentRound = null;
+      });
     }
   }
 
@@ -36,8 +69,15 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     for (var player in widget.selectedPlayers) {
       totals[player.id] = 0;
     }
+    // Add completed rounds
     for (var round in _rounds) {
       round.forEach((playerId, score) {
+        totals[playerId] = (totals[playerId] ?? 0) + score;
+      });
+    }
+    // Add current round being built (if exists)
+    if (_currentRound != null) {
+      _currentRound!.forEach((playerId, score) {
         totals[playerId] = (totals[playerId] ?? 0) + score;
       });
     }
@@ -48,6 +88,15 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     final currentPlayer = widget.selectedPlayers[_currentPlayerIndex];
     setState(() {
       _scoreControllers[currentPlayer.id]!.text = value.toString();
+      _highlightedPreset = value;
+    });
+    // Clear highlight after a short delay
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        setState(() {
+          _highlightedPreset = null;
+        });
+      }
     });
   }
 
@@ -76,6 +125,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
       }
       _currentPlayerIndex = 0;
       _isInputExpanded = false;
+      _currentRound = null;
     });
     // Scroll to bottom
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -210,27 +260,33 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
 
   Widget _buildPresetButton(int value, {String? label, bool isSpecial = false}) {
     final displayLabel = label ?? (value >= 0 ? '+$value' : '$value');
+    final isHighlighted = _highlightedPreset == value;
     return GestureDetector(
       onTap: () => _applyPreset(value),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSpecial
-              ? const Color(0xFF30E8BF).withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.05),
+          color: isHighlighted
+              ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
+              : (isSpecial
+                  ? const Color(0xFF30E8BF).withValues(alpha: 0.15)
+                  : Colors.white.withValues(alpha: 0.05)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSpecial
-                ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
-                : Colors.white.withValues(alpha: 0.1),
+            color: isHighlighted
+                ? const Color(0xFF30E8BF)
+                : (isSpecial
+                    ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
+                    : Colors.white.withValues(alpha: 0.1)),
+            width: isHighlighted ? 2 : 1,
           ),
         ),
         child: Center(
           child: Text(
             displayLabel,
             style: TextStyle(
-              color: isSpecial ? const Color(0xFF30E8BF) : Colors.white,
+              color: isHighlighted || isSpecial ? const Color(0xFF30E8BF) : Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 14,
               fontFamily: 'monospace',
@@ -322,7 +378,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                       final double sidePadding = 12.0;
 
                       final int playerCount = widget.selectedPlayers.length;
-                      final int roundCount = _rounds.length;
+                      final int roundCount = _rounds.length + (_currentRound != null ? 1 : 0);
                       final double scrollableWidth = roundCount * roundWidth;
 
                       return Padding(
@@ -387,14 +443,16 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                           children: List.generate(roundCount, (
                                             index,
                                           ) {
+                                            final isCurrentRound = index == _rounds.length && _currentRound != null;
                                             return SizedBox(
                                               width: roundWidth,
                                               child: Center(
                                                 child: Text(
                                                   'R${index + 1}',
                                                   style: TextStyle(
-                                                    color: Colors.white
-                                                        .withValues(alpha: 0.3),
+                                                    color: isCurrentRound
+                                                        ? const Color(0xFF30E8BF)
+                                                        : Colors.white.withValues(alpha: 0.3),
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w900,
                                                   ),
@@ -407,7 +465,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                       const SizedBox(height: 16),
                                       // Scores Body
                                       Expanded(
-                                        child: _rounds.isEmpty
+                                        child: (_rounds.isEmpty && _currentRound == null)
                                             ? Center(
                                                 child: Text(
                                                   'NO ROUNDS',
@@ -473,35 +531,46 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                                         ) {
                                                           final player = widget
                                                               .selectedPlayers[pIndex];
-                                                          final score =
-                                                              _rounds[rIndex][player
-                                                                  .id] ??
-                                                              0;
+                                                          final score = rIndex < _rounds.length
+                                                              ? (_rounds[rIndex][player.id] ?? 0)
+                                                              : (_currentRound?[player.id] ?? 0);
+                                                          final isCurrentRound = rIndex == _rounds.length && _currentRound != null;
                                                           return SizedBox(
                                                             width: roundWidth,
-                                                            child: Center(
-                                                              child: Text(
-                                                                score == 0
-                                                                    ? '0'
-                                                                    : (score > 0
-                                                                          ? '+$score'
-                                                                          : '$score'),
-                                                                style: TextStyle(
-                                                                  color:
-                                                                      score < 0
-                                                                      ? const Color(
-                                                                          0xFF30E8BF,
-                                                                        )
-                                                                      : Colors.white.withValues(
-                                                                          alpha:
-                                                                              0.7,
-                                                                        ),
-                                                                  fontSize: 15,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontFamily:
-                                                                      'monospace',
+                                                            child: Container(
+                                                              decoration: isCurrentRound
+                                                                  ? BoxDecoration(
+                                                                      color: const Color(0xFF30E8BF).withValues(alpha: 0.1),
+                                                                      border: Border.all(
+                                                                        color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
+                                                                        width: 1,
+                                                                      ),
+                                                                    )
+                                                                  : null,
+                                                              child: Center(
+                                                                child: Text(
+                                                                  score == 0
+                                                                      ? '0'
+                                                                      : (score > 0
+                                                                            ? '+$score'
+                                                                            : '$score'),
+                                                                  style: TextStyle(
+                                                                    color:
+                                                                        score < 0
+                                                                        ? const Color(
+                                                                            0xFF30E8BF,
+                                                                          )
+                                                                        : Colors.white.withValues(
+                                                                            alpha:
+                                                                                0.7,
+                                                                          ),
+                                                                    fontSize: 15,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    fontFamily:
+                                                                        'monospace',
+                                                                  ),
                                                                 ),
                                                               ),
                                                             ),
@@ -634,7 +703,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    _isOnLastPlayer() ? 'FINISH ROUND' : 'ADD POINT',
+                                    _isOnLastPlayer() ? 'FINISH' : 'ADD POINT',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 2,
