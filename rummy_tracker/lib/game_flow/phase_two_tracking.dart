@@ -245,10 +245,19 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
 
     if (winnerId != null) {
       final winner = widget.selectedPlayers.firstWhere((p) => p.id == winnerId);
+      // Create rankings list with all players and their scores
+      final rankings = widget.selectedPlayers.map((player) {
+        return MapEntry(player, totals[player.id] ?? 0);
+      }).toList()
+        ..sort((a, b) => a.value.compareTo(b.value)); // Sort by score (lowest first)
+      
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => PhaseThreeWinScreen(winner: winner),
+          builder: (context) => PhaseThreeWinScreen(
+            winner: winner,
+            rankings: rankings,
+          ),
         ),
       );
     }
