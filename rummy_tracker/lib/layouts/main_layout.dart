@@ -51,7 +51,7 @@ class MainMenuScreen extends StatelessWidget {
                                 'serif', // Using serif for a more "classic" game feel
                             shadows: [
                               Shadow(
-                                color: Colors.deepPurpleAccent.withOpacity(0.8),
+                                color: Colors.black.withOpacity(0.5),
                                 blurRadius: 25,
                                 offset: const Offset(0, 0),
                               ),
@@ -102,7 +102,7 @@ class MainMenuScreen extends StatelessWidget {
                           MenuTile(
                             title: 'PLAY NOW',
                             icon: Icons.play_arrow_rounded,
-                            color: const Color(0xFF6A11CB),
+                            color: const Color.fromARGB(255, 255, 1, 1),
                             onTap: () {
                               // TODO: Navigate to game setup
                             },
@@ -171,13 +171,6 @@ class MenuTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.2),
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.5),
-                      blurRadius: 12,
-                      spreadRadius: -2,
-                    ),
-                  ],
                 ),
                 child: Icon(icon, color: Colors.white, size: 24),
               ),
@@ -194,9 +187,6 @@ class MenuTile extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     letterSpacing: 2.0,
                     fontFamily: 'serif',
-                    shadows: [
-                      Shadow(color: color.withOpacity(0.8), blurRadius: 10),
-                    ],
                   ),
                 ),
               ),
