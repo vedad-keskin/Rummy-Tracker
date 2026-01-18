@@ -15,6 +15,21 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   final List<Map<String, int>> _rounds = [];
   final ScrollController _verticalController = ScrollController();
   final ScrollController _horizontalController = ScrollController();
+  final Map<String, TextEditingController> _scoreControllers = {};
+  int _currentPlayerIndex = 0;
+  bool _isInputExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    for (var player in widget.selectedPlayers) {
+      _scoreControllers[player.id] = TextEditingController(text: '0');
+    }
+  }
+
+  bool _isOnLastPlayer() {
+    return _currentPlayerIndex == widget.selectedPlayers.length - 1;
+  }
 
   Map<String, int> _getTotals() {
     final Map<String, int> totals = {};
@@ -29,29 +44,56 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     return totals;
   }
 
-  void _addRound() async {
-    final roundScores = await showDialog<Map<String, int>>(
-      context: context,
-      barrierColor: Colors.black87,
-      barrierDismissible: false,
-      builder: (context) => PointInputDialog(players: widget.selectedPlayers),
-    );
+  void _applyPreset(int value) {
+    final currentPlayer = widget.selectedPlayers[_currentPlayerIndex];
+    setState(() {
+      _scoreControllers[currentPlayer.id]!.text = value.toString();
+    });
+  }
 
-    if (roundScores != null) {
+  void _addPoint() {
+    // Move to next player if available
+    if (_currentPlayerIndex < widget.selectedPlayers.length - 1) {
       setState(() {
-        _rounds.add(roundScores);
-      });
-      // Scroll to bottom
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (_verticalController.hasClients) {
-          _verticalController.animateTo(
-            _verticalController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOut,
-          );
-        }
+        _currentPlayerIndex++;
       });
     }
+  }
+
+  void _finishRound() {
+    final Map<String, int> roundScores = {};
+
+    for (var player in widget.selectedPlayers) {
+      final value = int.tryParse(_scoreControllers[player.id]!.text) ?? 0;
+      roundScores[player.id] = value;
+    }
+
+    setState(() {
+      _rounds.add(roundScores);
+      // Reset all scores to 0
+      for (var player in widget.selectedPlayers) {
+        _scoreControllers[player.id]!.text = '0';
+      }
+      _currentPlayerIndex = 0;
+      _isInputExpanded = false;
+    });
+    // Scroll to bottom
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_verticalController.hasClients) {
+        _verticalController.animateTo(
+          _verticalController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _expandInput() {
+    setState(() {
+      _isInputExpanded = true;
+      _currentPlayerIndex = 0;
+    });
   }
 
   void _declareWinner() {
@@ -81,6 +123,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   void dispose() {
     _verticalController.dispose();
     _horizontalController.dispose();
+    for (var controller in _scoreControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -114,15 +159,22 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     );
   }
 
-  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0}) {
+  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0, bool isHighlighted = false}) {
     final isNegative = total < 0;
     return Container(
       height: height,
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: isHighlighted
+            ? const Color(0xFF30E8BF).withValues(alpha: 0.2)
+            : Colors.white.withValues(alpha: 0.03),
         borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(
+          color: isHighlighted
+              ? const Color(0xFF30E8BF).withValues(alpha: 0.6)
+              : Colors.white.withValues(alpha: 0.05),
+          width: isHighlighted ? 2 : 1,
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
@@ -133,8 +185,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
               player.name.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: isHighlighted ? Colors.white : Colors.white70,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'serif',
@@ -152,6 +204,39 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPresetButton(int value, {String? label, bool isSpecial = false}) {
+    final displayLabel = label ?? (value >= 0 ? '+$value' : '$value');
+    return GestureDetector(
+      onTap: () => _applyPreset(value),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSpecial
+              ? const Color(0xFF30E8BF).withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSpecial
+                ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
+                : Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            displayLabel,
+            style: TextStyle(
+              color: isSpecial ? const Color(0xFF30E8BF) : Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -213,7 +298,15 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48),
+                      if (_rounds.isNotEmpty)
+                        IconButton(
+                          onPressed: _declareWinner,
+                          icon: const Icon(Icons.emoji_events_rounded),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white.withValues(alpha: 0.1),
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -252,10 +345,21 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                       itemBuilder: (context, i) {
                                         final player = widget.selectedPlayers[i];
                                         final total = totals[player.id] ?? 0;
-                                        return _buildPlayerRowCell(
-                                          player,
-                                          total,
-                                          height: rowHeight,
+                                        final isHighlighted = _isInputExpanded && i == _currentPlayerIndex;
+                                        return GestureDetector(
+                                          onTap: () {
+                                            if (_isInputExpanded) {
+                                              setState(() {
+                                                _currentPlayerIndex = i;
+                                              });
+                                            }
+                                          },
+                                          child: _buildPlayerRowCell(
+                                            player,
+                                            total,
+                                            height: rowHeight,
+                                            isHighlighted: isHighlighted,
+                                          ),
                                         );
                                       },
                                     ),
@@ -318,7 +422,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                             : ListView.builder(
                                                 itemCount: playerCount,
                                                 padding: const EdgeInsets.only(
-                                                  bottom: 120,
+                                                  bottom: 240,
                                                 ),
                                                 itemBuilder: (context, pIndex) {
                                                   // Master Synchronizer
@@ -424,17 +528,129 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
             ),
           ),
 
-          // Action Buttons
+          // Score Input Section
           Positioned(
             left: 24,
             right: 24,
             bottom: 32,
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: _addRound,
+            child: _isInputExpanded
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Preset Buttons - Row 1
+                      Row(
+                        children: [
+                          Expanded(child: _buildPresetButton(0)),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(-40, label: '-40')),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(-140, label: '-140')),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(-500, label: 'RUMMY', isSpecial: true)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Preset Buttons - Row 2
+                      Row(
+                        children: [
+                          Expanded(child: _buildPresetButton(5, label: '+5')),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(10, label: '+10')),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(100, label: '+100')),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(200, label: '+200')),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Input Field and Action Button
+                      Row(
+                        children: [
+                          // Score Input Field
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
+                                  width: 2,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id],
+                                keyboardType: const TextInputType.numberWithOptions(signed: true),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFF30E8BF),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'monospace',
+                                ),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: '0',
+                                  hintStyle: TextStyle(
+                                    color: Colors.white24,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                                onTap: () {
+                                  final controller = _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id]!;
+                                  // Select all text when tapped
+                                  controller.selection = TextSelection(
+                                    baseOffset: 0,
+                                    extentOffset: controller.text.length,
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // ADD POINT or FINISH ROUND Button
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: _isOnLastPlayer() ? _finishRound : _addPoint,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF30E8BF),
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                elevation: 8,
+                                shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    _isOnLastPlayer() ? Icons.check_rounded : Icons.add_rounded,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _isOnLastPlayer() ? 'FINISH ROUND' : 'ADD POINT',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 2,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : ElevatedButton(
+                    onPressed: _expandInput,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF30E8BF),
                       foregroundColor: Colors.black,
@@ -443,9 +659,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       elevation: 8,
-                      shadowColor: const Color(
-                        0xFF30E8BF,
-                      ).withValues(alpha: 0.5),
+                      shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
                     ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -462,276 +676,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                       ],
                     ),
                   ),
-                ),
-                if (_rounds.isNotEmpty) ...[
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 1,
-                    child: ElevatedButton(
-                      onPressed: _declareWinner,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.1),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
-                          ),
-                        ),
-                      ),
-                      child: const Icon(Icons.emoji_events_rounded),
-                    ),
-                  ),
-                ],
-              ],
-            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class PointInputDialog extends StatefulWidget {
-  final List<Player> players;
-
-  const PointInputDialog({super.key, required this.players});
-
-  @override
-  State<PointInputDialog> createState() => _PointInputDialogState();
-}
-
-class _PointInputDialogState extends State<PointInputDialog> {
-  final Map<String, TextEditingController> _controllers = {};
-  int _currentPlayerIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    for (var player in widget.players) {
-      _controllers[player.id] = TextEditingController();
-    }
-  }
-
-  @override
-  void dispose() {
-    for (var controller in _controllers.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  void _submit() {
-    final Map<String, int> results = {};
-    for (var player in widget.players) {
-      final value = int.tryParse(_controllers[player.id]!.text) ?? 0;
-      results[player.id] = value;
-    }
-    Navigator.pop(context, results);
-  }
-
-  void _applyPreset(int value) {
-    setState(() {
-      _controllers[widget.players[_currentPlayerIndex].id]!.text = value
-          .toString();
-      if (_currentPlayerIndex < widget.players.length - 1) {
-        _currentPlayerIndex++;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final currentPlayer = widget.players[_currentPlayerIndex];
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1B263B),
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
-              blurRadius: 30,
-            ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'ROUND SCORES',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 4,
-                  fontFamily: 'serif',
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: widget.players.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final isCurrent = index == _currentPlayerIndex;
-                  return Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: isCurrent
-                          ? const Color(0xFF30E8BF)
-                          : Colors.white10,
-                      shape: BoxShape.circle,
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                currentPlayer.name.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'serif',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _controllers[currentPlayer.id],
-                keyboardType: const TextInputType.numberWithOptions(
-                  signed: true,
-                ),
-                textAlign: TextAlign.center,
-                autofocus: true,
-                style: const TextStyle(
-                  color: Color(0xFF30E8BF),
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'monospace',
-                ),
-                decoration: InputDecoration(
-                  hintText: '0',
-                  hintStyle: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                  border: InputBorder.none,
-                ),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  _buildPresetButton(-40, label: '-40'),
-                  const SizedBox(width: 8),
-                  _buildPresetButton(-140, label: '-140'),
-                  const SizedBox(width: 8),
-                  _buildPresetButton(-500, label: 'RUMMY', isSpecial: true),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildPresetButton(0),
-                  const SizedBox(width: 8),
-                  _buildPresetButton(5),
-                  const SizedBox(width: 8),
-                  _buildPresetButton(100),
-                  const SizedBox(width: 8),
-                  _buildPresetButton(200),
-                ],
-              ),
-              const SizedBox(height: 40),
-              Row(
-                children: [
-                  if (_currentPlayerIndex > 0)
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => setState(() => _currentPlayerIndex--),
-                        child: Text(
-                          'BACK',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ),
-                    ),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: _currentPlayerIndex < widget.players.length - 1
-                          ? () => setState(() => _currentPlayerIndex++)
-                          : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.1),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: Text(
-                        _currentPlayerIndex < widget.players.length - 1
-                            ? 'NEXT PLAYER'
-                            : 'SAVE ROUND',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPresetButton(
-    int value, {
-    String? label,
-    bool isSpecial = false,
-  }) {
-    final displayLabel = label ?? (value >= 0 ? '+$value' : '$value');
-
-    return Expanded(
-      child: InkWell(
-        onTap: () => _applyPreset(value),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSpecial
-                ? const Color(0xFF30E8BF).withValues(alpha: 0.15)
-                : Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSpecial
-                  ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
-                  : Colors.white.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Center(
-            child: Text(
-              displayLabel,
-              style: TextStyle(
-                color: isSpecial ? const Color(0xFF30E8BF) : Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
