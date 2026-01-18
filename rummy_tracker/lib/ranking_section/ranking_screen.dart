@@ -40,7 +40,7 @@ class _RankingScreenState extends State<RankingScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFF1B263B),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -60,7 +60,7 @@ class _RankingScreenState extends State<RankingScreen> {
                 'This will clear all player win records. This action cannot be undone.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 16,
                 ),
               ),
@@ -73,7 +73,7 @@ class _RankingScreenState extends State<RankingScreen> {
                       child: Text(
                         'CANCEL',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           letterSpacing: 2,
                         ),
                       ),
@@ -135,8 +135,8 @@ class _RankingScreenState extends State<RankingScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.5),
-                    Colors.black.withOpacity(0.9),
+                    Colors.black.withValues(alpha: 0.5),
+                    Colors.black.withValues(alpha: 0.9),
                   ],
                 ),
               ),
@@ -161,7 +161,9 @@ class _RankingScreenState extends State<RankingScreen> {
                             color: Colors.white,
                           ),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.1),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.1,
+                            ),
                             padding: const EdgeInsets.all(12),
                           ),
                         ),
@@ -185,7 +187,9 @@ class _RankingScreenState extends State<RankingScreen> {
                             color: Colors.redAccent,
                           ),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.1),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.1,
+                            ),
                             padding: const EdgeInsets.all(12),
                           ),
                         ),
@@ -201,13 +205,14 @@ class _RankingScreenState extends State<RankingScreen> {
                             child: Text(
                               'NO PLAYERS FOUND',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha: 0.15),
                                 letterSpacing: 2,
                                 fontSize: 18,
                               ),
                             ),
                           )
                         : ListView.separated(
+                            clipBehavior: Clip.none,
                             padding: const EdgeInsets.only(bottom: 24),
                             itemCount: _players.length,
                             separatorBuilder: (_, __) =>
@@ -242,13 +247,13 @@ class _RankingScreenState extends State<RankingScreen> {
                                       vertical: 16,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(
-                                        rank == 1 ? 0.15 : 0.08,
+                                      color: Colors.white.withValues(
+                                        alpha: rank == 1 ? 0.15 : 0.08,
                                       ),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: rankColor.withOpacity(
-                                          rank <= 3 ? 0.4 : 0.1,
+                                        color: rankColor.withValues(
+                                          alpha: rank <= 3 ? 0.4 : 0.1,
                                         ),
                                         width: rank <= 3 ? 1.5 : 1,
                                       ),
@@ -262,13 +267,13 @@ class _RankingScreenState extends State<RankingScreen> {
                                               width: 48,
                                               height: 48,
                                               decoration: BoxDecoration(
-                                                color: rankColor.withOpacity(
-                                                  0.1,
+                                                color: rankColor.withValues(
+                                                  alpha: 0.1,
                                                 ),
                                                 shape: BoxShape.circle,
                                                 border: Border.all(
-                                                  color: rankColor.withOpacity(
-                                                    0.2,
+                                                  color: rankColor.withValues(
+                                                    alpha: 0.2,
                                                   ),
                                                 ),
                                               ),
