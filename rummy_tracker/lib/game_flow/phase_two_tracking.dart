@@ -354,15 +354,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                           ),
                         ),
                       ),
-                      if (_rounds.isNotEmpty)
-                        IconButton(
-                          onPressed: _declareWinner,
-                          icon: const Icon(Icons.emoji_events_rounded),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withValues(alpha: 0.1),
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
+                      const SizedBox(width: 48),
                     ],
                   ),
                 ),
@@ -718,32 +710,50 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                       ),
                     ],
                   )
-                : ElevatedButton(
-                    onPressed: _expandInput,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF30E8BF),
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                : Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _expandInput,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF30E8BF),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            elevation: 8,
+                            shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_rounded, size: 24),
+                              SizedBox(width: 8),
+                              Text(
+                                'ADD ROUND',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      elevation: 8,
-                      shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_rounded, size: 24),
-                        SizedBox(width: 8),
-                        Text(
-                          'ADD ROUND',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 2,
+                      if (_rounds.isNotEmpty) ...[
+                        const SizedBox(width: 16),
+                        IconButton(
+                          onPressed: _declareWinner,
+                          icon: const Icon(Icons.emoji_events_rounded),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white.withValues(alpha: 0.1),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.all(20),
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
           ),
         ],
