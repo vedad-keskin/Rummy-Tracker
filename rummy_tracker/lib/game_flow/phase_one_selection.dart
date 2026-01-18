@@ -36,10 +36,8 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
       for (var player in players) {
         if (!_playerSuits.containsKey(player.id)) {
           _playerSuits[player.id] = _random.nextInt(4);
-          // Random rotation between -20 and 20 degrees in radians
-          _playerRotations[player.id] =
-              (0.2 + _random.nextDouble() * 0.3) *
-              (_random.nextBool() ? 1 : -1);
+          // Rotation strictly between 0.3 and 0.8 radians (bottom-left tilt)
+          _playerRotations[player.id] = 0.3 + (_random.nextDouble() * 0.5);
         }
       }
 
@@ -254,6 +252,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                             ),
                           )
                         : ListView.separated(
+                            clipBehavior: Clip.none,
                             padding: const EdgeInsets.only(bottom: 120),
                             itemCount: _allPlayers.length,
                             separatorBuilder: (_, __) =>
@@ -314,27 +313,63 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                         ),
                                         child: Row(
                                           children: [
-                                            // Player Badge
-                                            AnimatedContainer(
-                                              duration: const Duration(
-                                                milliseconds: 300,
-                                              ),
-                                              width: 52,
-                                              height: 52,
+                                            // Wins Badge
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 10,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: isSelected
-                                                    ? const Color(0xFF30E8BF)
+                                                    ? Colors.black.withValues(
+                                                        alpha: 0.3,
+                                                      )
                                                     : Colors.white.withValues(
-                                                        alpha: 0.1,
+                                                        alpha: 0.05,
                                                       ),
-                                                shape: BoxShape.circle,
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                border: Border.all(
+                                                  color: isSelected
+                                                      ? Colors.white.withValues(
+                                                          alpha: 0.2,
+                                                        )
+                                                      : Colors.white.withValues(
+                                                          alpha: 0.05,
+                                                        ),
+                                                ),
                                               ),
-                                              child: Icon(
-                                                Icons.person_outline_rounded,
-                                                color: isSelected
-                                                    ? Colors.black
-                                                    : Colors.white54,
-                                                size: 28,
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    '${player.wins}',
+                                                    style: TextStyle(
+                                                      color: isSelected
+                                                          ? const Color(
+                                                              0xFF30E8BF,
+                                                            )
+                                                          : Colors.white54,
+                                                      fontSize: 20,
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                      fontFamily: 'serif',
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'WINS',
+                                                    style: TextStyle(
+                                                      color: isSelected
+                                                          ? Colors.white54
+                                                          : Colors.white12,
+                                                      fontSize: 8,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      letterSpacing: 1,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                             const SizedBox(width: 20),
@@ -380,8 +415,8 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                       ),
                                       // Decorative Overlapping Suit (Top-Right Border) - Only visible when selected
                                       Positioned(
-                                        top: -15,
-                                        right: -10,
+                                        top: -12,
+                                        right: -5,
                                         child: AnimatedScale(
                                           scale: isSelected ? 1.0 : 0.0,
                                           duration: const Duration(
