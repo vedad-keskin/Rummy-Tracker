@@ -77,19 +77,22 @@ class MainMenuScreen extends StatelessWidget {
                     const SizedBox(height: 60),
                     // Centered Menu Container
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 24,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withOpacity(0.04),
                         borderRadius: BorderRadius.circular(32),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.08),
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 30,
-                            spreadRadius: 5,
+                            color: Colors.black.withOpacity(0.4),
+                            blurRadius: 40,
+                            spreadRadius: -10,
                           ),
                         ],
                       ),
@@ -98,23 +101,17 @@ class MainMenuScreen extends StatelessWidget {
                         children: [
                           MenuTile(
                             title: 'PLAY NOW',
-                            subtitle: 'Start a new session',
                             icon: Icons.play_arrow_rounded,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-                            ),
+                            color: const Color(0xFF6A11CB),
                             onTap: () {
                               // TODO: Navigate to game setup
                             },
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           MenuTile(
-                            title: 'LEADERBOARDS',
-                            subtitle: 'Top player rankings',
+                            title: 'RANKING',
                             icon: Icons.leaderboard_rounded,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF30E8BF), Color(0xFFFF8235)],
-                            ),
+                            color: const Color(0xFF30E8BF),
                             onTap: () {
                               // TODO: Navigate to leaderboards
                             },
@@ -135,106 +132,80 @@ class MainMenuScreen extends StatelessWidget {
 
 class MenuTile extends StatelessWidget {
   final String title;
-  final String subtitle;
   final IconData icon;
-  final Gradient gradient;
+  final Color color;
   final VoidCallback onTap;
 
   const MenuTile({
     super.key,
     required this.title,
-    required this.subtitle,
     required this.icon,
-    required this.gradient,
+    required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.4), width: 1.2),
+            gradient: LinearGradient(
+              colors: [color.withOpacity(0.2), Colors.transparent],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withOpacity(0.12),
-                  Colors.white.withOpacity(0.03),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: gradient,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (gradient as LinearGradient).colors.first
-                            .withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 28),
+          child: Row(
+            children: [
+              // Stylized Icon Container
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.5),
+                      blurRadius: 12,
+                      spreadRadius: -2,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                          fontFamily:
-                              'monospace', // Monospace for a "modern tech" feel
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 12,
-                        ),
-                      ),
+                child: Icon(icon, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 16),
+              // Text Content
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.visible,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2.0,
+                    fontFamily: 'serif',
+                    shadows: [
+                      Shadow(color: color.withOpacity(0.8), blurRadius: 10),
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: Colors.white.withOpacity(0.3),
-                  size: 16,
-                ),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.white.withOpacity(0.3),
+                size: 14,
+              ),
+            ],
           ),
         ),
       ),

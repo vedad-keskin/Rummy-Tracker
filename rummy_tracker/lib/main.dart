@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rummy_tracker/layout/main_layout.dart';
+import 'package:rummy_tracker/layouts/main_layout.dart';
 
 void main() {
   runApp(const MyApp());
