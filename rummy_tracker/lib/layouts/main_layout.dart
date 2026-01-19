@@ -4,6 +4,9 @@ import 'package:rummy_tracker/players_section/players_screen.dart';
 import 'package:rummy_tracker/ranking_section/ranking_screen.dart';
 import 'package:rummy_tracker/components/team_credits_dialog.dart';
 import 'package:rummy_tracker/game_flow/phase_one_selection.dart';
+import 'package:rummy_tracker/game_flow/phase_two_tracking.dart';
+import 'package:rummy_tracker/offline_db/game_state_service.dart';
+import 'package:rummy_tracker/offline_db/player_service.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -14,6 +17,8 @@ class MainMenuScreen extends StatefulWidget {
 
 class _MainMenuScreenState extends State<MainMenuScreen> {
   Timer? _easterEggTimer;
+  final GameStateService _gameStateService = GameStateService();
+  final PlayerService _playerService = PlayerService();
 
   @override
   void dispose() {
@@ -138,7 +143,58 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                             title: 'PLAY NOW',
                             icon: Icons.play_arrow_rounded,
                             color: const Color.fromARGB(255, 255, 1, 1),
-                            onTap: () {
+                            onTap: () async {
+                              // Check if there's a game in progress
+                              final gameState = await _gameStateService.loadGameState();
+                              
+                              if (gameState != null && gameState.hasGameInProgress) {
+                                // Load players and restore game state
+                                final allPlayers = await _playerService.loadPlayers();
+                                final selectedPlayers = allPlayers
+                                    .where((p) => gameState.selectedPlayerIds.contains(p.id))
+                                    .toList();
+                                
+                                if (selectedPlayers.length >= 2) {
+                                  // Navigate directly to tracking screen with saved state
+                                  Navigator.push(
+                                    context,
+                                    PageRouteBuilder(
+                                      pageBuilder: (context, animation, secondaryAnimation) =>
+                                          PhaseTwoTrackingScreen(
+                                        selectedPlayers: selectedPlayers,
+                                        savedState: gameState,
+                                      ),
+                                      transitionsBuilder: (
+                                        context,
+                                        animation,
+                                        secondaryAnimation,
+                                        child,
+                                      ) {
+                                        var curve = Curves.easeOutCubic;
+                                        var curvedAnimation = CurvedAnimation(
+                                          parent: animation,
+                                          curve: curve,
+                                        );
+
+                                        return FadeTransition(
+                                          opacity: curvedAnimation,
+                                          child: ScaleTransition(
+                                            scale: Tween<double>(
+                                              begin: 0.95,
+                                              end: 1.0,
+                                            ).animate(curvedAnimation),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                      transitionDuration: const Duration(milliseconds: 600),
+                                    ),
+                                  );
+                                  return;
+                                }
+                              }
+                              
+                              // No game in progress, go to player selection
                               Navigator.push(
                                 context,
                                 PageRouteBuilder(
@@ -298,7 +354,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 _easterEggTimer?.cancel();
               },
               child: Text(
-                'Rummy Tracker v1.2.5',
+                'Rummy Tracker v1.3.1',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.24),
                   fontSize: 12,

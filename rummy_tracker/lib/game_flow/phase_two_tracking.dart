@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
 import 'package:rummy_tracker/game_flow/phase_three_win.dart';
+import 'package:rummy_tracker/offline_db/game_state_service.dart';
 
 class PhaseTwoTrackingScreen extends StatefulWidget {
   final List<Player> selectedPlayers;
+  final GameState? savedState;
 
-  const PhaseTwoTrackingScreen({super.key, required this.selectedPlayers});
+  const PhaseTwoTrackingScreen({
+    super.key,
+    required this.selectedPlayers,
+    this.savedState,
+  });
 
   @override
   State<PhaseTwoTrackingScreen> createState() => _PhaseTwoTrackingScreenState();
@@ -20,18 +26,42 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   bool _isInputExpanded = false;
   int? _highlightedPreset;
   Map<String, int>? _currentRound;
+  final GameStateService _gameStateService = GameStateService();
 
   @override
   void initState() {
     super.initState();
-    for (var player in widget.selectedPlayers) {
-      final controller = TextEditingController(text: '0');
-      _scoreControllers[player.id] = controller;
-      // Add listener to update round in real-time
-      controller.addListener(() {
-        _updateCurrentRound();
-      });
+    
+    // Load saved state if available
+    if (widget.savedState != null) {
+      final savedState = widget.savedState!;
+      _rounds.addAll(savedState.rounds);
+      _currentRound = savedState.currentRound;
+      _currentPlayerIndex = savedState.currentPlayerIndex;
+      _isInputExpanded = savedState.isInputExpanded;
+      
+      // Initialize controllers with saved scores or defaults
+      for (var player in widget.selectedPlayers) {
+        final savedScore = savedState.scoreControllers[player.id] ?? '0';
+        final controller = TextEditingController(text: savedScore);
+        _scoreControllers[player.id] = controller;
+        controller.addListener(() {
+          _updateCurrentRound();
+        });
+      }
+    } else {
+      // Initialize fresh controllers
+      for (var player in widget.selectedPlayers) {
+        final controller = TextEditingController(text: '0');
+        _scoreControllers[player.id] = controller;
+        controller.addListener(() {
+          _updateCurrentRound();
+        });
+      }
     }
+    
+    // Save initial state
+    _saveGameState();
   }
 
   void _updateCurrentRound() {
@@ -58,6 +88,27 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
         _currentRound = null;
       });
     }
+    
+    // Save state whenever round is updated
+    _saveGameState();
+  }
+
+  void _saveGameState() {
+    final scoreControllersMap = <String, String>{};
+    for (var entry in _scoreControllers.entries) {
+      scoreControllersMap[entry.key] = entry.value.text;
+    }
+    
+    final gameState = GameState(
+      selectedPlayerIds: widget.selectedPlayers.map((p) => p.id).toList(),
+      rounds: _rounds,
+      currentRound: _currentRound,
+      currentPlayerIndex: _currentPlayerIndex,
+      isInputExpanded: _isInputExpanded,
+      scoreControllers: scoreControllersMap,
+    );
+    
+    _gameStateService.saveGameState(gameState);
   }
 
   bool _isOnLastPlayer() {
@@ -122,6 +173,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
       setState(() {
         _currentPlayerIndex++;
       });
+      _saveGameState();
     }
   }
 
@@ -143,6 +195,10 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
       _isInputExpanded = false;
       _currentRound = null;
     });
+    
+    // Save state after round is finished
+    _saveGameState();
+    
     // Scroll to bottom
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_verticalController.hasClients) {
@@ -160,6 +216,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
       _isInputExpanded = true;
       _currentPlayerIndex = 0;
     });
+    _saveGameState();
   }
 
   Future<bool> _onWillPop() async {
@@ -207,7 +264,11 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
               ),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () {
+                // Clear game state when user confirms exit
+                _gameStateService.clearGameState();
+                Navigator.of(context).pop(true);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF30E8BF),
                 foregroundColor: Colors.black,
@@ -244,6 +305,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     });
 
     if (winnerId != null) {
+      // Clear game state when game is finished
+      _gameStateService.clearGameState();
+      
       final winner = widget.selectedPlayers.firstWhere((p) => p.id == winnerId);
       // Create rankings list with all players and their scores
       final rankings = widget.selectedPlayers.map((player) {
@@ -423,6 +487,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
         if (didPop) return;
         final shouldPop = await _onWillPop();
         if (shouldPop && context.mounted) {
+          // Clear game state when explicitly exiting via back gesture
+          _gameStateService.clearGameState();
           Navigator.of(context).pop();
         }
       },
@@ -460,6 +526,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                         onPressed: () async {
                           final shouldPop = await _onWillPop();
                           if (shouldPop && context.mounted) {
+                            // Clear game state when explicitly exiting
+                            _gameStateService.clearGameState();
                             Navigator.pop(context);
                           }
                         },
@@ -534,6 +602,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                               setState(() {
                                                 _currentPlayerIndex = i;
                                               });
+                                              _saveGameState();
                                             }
                                           },
                                           child: _buildPlayerRowCell(
