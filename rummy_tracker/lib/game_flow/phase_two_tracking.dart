@@ -17,7 +17,7 @@ class PhaseTwoTrackingScreen extends StatefulWidget {
   State<PhaseTwoTrackingScreen> createState() => _PhaseTwoTrackingScreenState();
 }
 
-class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
+class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with TickerProviderStateMixin {
   final List<Map<String, int>> _rounds = [];
   final ScrollController _verticalController = ScrollController();
   final ScrollController _horizontalController = ScrollController();
@@ -29,6 +29,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   Map<String, int>? _currentRound;
   final GameStateService _gameStateService = GameStateService();
   bool _isSyncingScroll = false;
+  List<int> _sortedPlayerIndices = [];
 
   @override
   void initState() {
@@ -60,6 +61,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
           _updateCurrentRound();
         });
       }
+    }
+    
+    // Initialize sorted indices (original order)
+    _sortedPlayerIndices = List.generate(widget.selectedPlayers.length, (i) => i);
+    
+    // If we have saved rounds, sort by current totals
+    if (_rounds.isNotEmpty) {
+      _sortPlayersByScore(animate: false);
     }
     
     // Set up scroll synchronization
@@ -173,6 +182,31 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     return totals;
   }
 
+  void _sortPlayersByScore({bool animate = true}) {
+    final totals = _getTotals();
+    
+    // Create list of indices sorted by score (lowest first = winning)
+    final newOrder = List.generate(widget.selectedPlayers.length, (i) => i);
+    newOrder.sort((a, b) {
+      final scoreA = totals[widget.selectedPlayers[a].id] ?? 0;
+      final scoreB = totals[widget.selectedPlayers[b].id] ?? 0;
+      return scoreA.compareTo(scoreB);
+    });
+    
+    if (animate) {
+      // Animate the reordering with a slight delay
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _sortedPlayerIndices = newOrder;
+          });
+        }
+      });
+    } else {
+      _sortedPlayerIndices = newOrder;
+    }
+  }
+
   void _applyPreset(int value) {
     final currentPlayer = widget.selectedPlayers[_currentPlayerIndex];
     setState(() {
@@ -221,11 +255,21 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     // Save state after round is finished
     _saveGameState();
     
-    // Scroll to bottom
+    // Sort players by score with animation
+    _sortPlayersByScore(animate: true);
+    
+    // Scroll to top to see the reordering
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_verticalController.hasClients) {
         _verticalController.animateTo(
-          _verticalController.position.maxScrollExtent,
+          0,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+        );
+      }
+      if (_roundsVerticalController.hasClients) {
+        _roundsVerticalController.animateTo(
+          0,
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeOut,
         );
@@ -458,9 +502,22 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
     );
   }
 
-  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0, bool isHighlighted = false, bool isWinner = false}) {
+  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0, bool isHighlighted = false, bool isWinner = false, int? rank}) {
     final isNegative = total < 0;
-    return Container(
+    
+    // Rank colors: gold, silver, bronze for top 3
+    Color? getRankColor(int r) {
+      switch (r) {
+        case 1: return const Color(0xFFFFD700); // Gold
+        case 2: return const Color(0xFFC0C0C0); // Silver
+        case 3: return const Color(0xFFCD7F32); // Bronze
+        default: return Colors.white.withValues(alpha: 0.5);
+      }
+    }
+    
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
       height: height,
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -479,20 +536,43 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
           width: (isWinner || isHighlighted) ? 2 : 1,
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Rank badge
+          if (rank != null) ...[
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: getRankColor(rank)!.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: getRankColor(rank)!.withValues(alpha: 0.6),
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  '$rank',
+                  style: TextStyle(
+                    color: getRankColor(rank),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
           Expanded(
             child: Row(
               children: [
                 if (isWinner) ...[
-                  const Icon(
-                    Icons.emoji_events_rounded,
-                    color: Color(0xFFFFD700),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 6),
+    
                 ],
                 Expanded(
                   child: Text(
@@ -503,7 +583,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                       color: isWinner
                           ? const Color(0xFFFFD700)
                           : (isHighlighted ? Colors.white : Colors.white70),
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: isWinner ? FontWeight.w900 : FontWeight.bold,
                       fontFamily: 'serif',
                     ),
@@ -512,14 +592,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           Text(
             '$total',
             style: TextStyle(
               color: isWinner
                   ? const Color(0xFFFFD700)
                   : (isNegative ? const Color(0xFF30E8BF) : Colors.white),
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               fontFamily: 'monospace',
             ),
@@ -679,28 +759,37 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                       itemCount: playerCount,
                                       padding: const EdgeInsets.only(bottom: 240),
                                       itemBuilder: (context, i) {
-                                        final player = widget.selectedPlayers[i];
+                                        // Use sorted order when not in input mode
+                                        final playerIndex = _isInputExpanded ? i : _sortedPlayerIndices[i];
+                                        final player = widget.selectedPlayers[playerIndex];
                                         final total = totals[player.id] ?? 0;
-                                        final isHighlighted = _isInputExpanded && i == _currentPlayerIndex;
+                                        final isHighlighted = _isInputExpanded && playerIndex == _currentPlayerIndex;
                                         final winningPlayerId = _getWinningPlayerId(totals);
                                         final isWinner = !_isInputExpanded && 
                                                          _rounds.isNotEmpty && 
                                                          winningPlayerId == player.id;
+                                        // Show rank when not in input mode and rounds exist
+                                        final rank = !_isInputExpanded && _rounds.isNotEmpty ? i + 1 : null;
                                         return GestureDetector(
                                           onTap: () {
                                             if (_isInputExpanded) {
                                               setState(() {
-                                                _currentPlayerIndex = i;
+                                                _currentPlayerIndex = playerIndex;
                                               });
                                               _saveGameState();
                                             }
                                           },
-                                          child: _buildPlayerRowCell(
-                                            player,
-                                            total,
-                                            height: rowHeight,
-                                            isHighlighted: isHighlighted,
-                                            isWinner: isWinner,
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 400),
+                                            curve: Curves.easeOutCubic,
+                                            child: _buildPlayerRowCell(
+                                              player,
+                                              total,
+                                              height: rowHeight,
+                                              isHighlighted: isHighlighted,
+                                              isWinner: isWinner,
+                                              rank: rank,
+                                            ),
                                           ),
                                         );
                                       },
@@ -770,7 +859,11 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                                   bottom: 240,
                                                 ),
                                                 itemBuilder: (context, pIndex) {
-                                                  return Container(
+                                                  // Use sorted order when not in input mode
+                                                  final playerIndex = _isInputExpanded ? pIndex : _sortedPlayerIndices[pIndex];
+                                                  return AnimatedContainer(
+                                                    duration: const Duration(milliseconds: 400),
+                                                    curve: Curves.easeOutCubic,
                                                     height: rowHeight,
                                                     margin:
                                                         const EdgeInsets.only(
@@ -801,7 +894,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                                         rIndex,
                                                       ) {
                                                         final player = widget
-                                                            .selectedPlayers[pIndex];
+                                                            .selectedPlayers[playerIndex];
                                                         final score = rIndex < _rounds.length
                                                             ? (_rounds[rIndex][player.id] ?? 0)
                                                             : (_currentRound?[player.id] ?? 0);
@@ -1036,61 +1129,32 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                       ),
                     ),
                   )
-                : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _expandInput,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF30E8BF),
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              elevation: 8,
-                              shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_rounded, size: 24),
-                                SizedBox(width: 3),
-                                Text(
-                                  'ADD ROUND',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (_rounds.isNotEmpty) ...[
-                          const SizedBox(width: 8),
+                : SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                      child: Row(
+                        children: [
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: _declareWinner,
+                              onPressed: _expandInput,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFFD700), // Gold
+                                backgroundColor: const Color(0xFF30E8BF),
                                 foregroundColor: Colors.black,
                                 padding: const EdgeInsets.symmetric(vertical: 20),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 elevation: 8,
-                                shadowColor: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                                shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
                               ),
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.emoji_events_rounded, size: 24),
-                                  SizedBox(width: 8),
+                                  Icon(Icons.add_rounded, size: 24),
+                                  SizedBox(width: 3),
                                   Text(
-                                    'FINISH',
+                                    'ADD ROUND',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 2,
@@ -1100,10 +1164,41 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                               ),
                             ),
                           ),
+                          if (_rounds.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _declareWinner,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFFD700),
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 8,
+                                  shadowColor: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.emoji_events_rounded, size: 24),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'FINISH',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-
                   ),
                   
           ),
