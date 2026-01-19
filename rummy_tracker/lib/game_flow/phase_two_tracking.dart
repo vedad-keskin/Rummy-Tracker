@@ -21,12 +21,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   final List<Map<String, int>> _rounds = [];
   final ScrollController _verticalController = ScrollController();
   final ScrollController _horizontalController = ScrollController();
+  final ScrollController _roundsVerticalController = ScrollController();
   final Map<String, TextEditingController> _scoreControllers = {};
   int _currentPlayerIndex = 0;
   bool _isInputExpanded = false;
   int? _highlightedPreset;
   Map<String, int>? _currentRound;
   final GameStateService _gameStateService = GameStateService();
+  bool _isSyncingScroll = false;
 
   @override
   void initState() {
@@ -60,8 +62,28 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
       }
     }
     
+    // Set up scroll synchronization
+    _verticalController.addListener(_syncPlayersToRounds);
+    _roundsVerticalController.addListener(_syncRoundsToPlayers);
+    
     // Save initial state
     _saveGameState();
+  }
+
+  void _syncPlayersToRounds() {
+    if (!_isSyncingScroll && _roundsVerticalController.hasClients) {
+      _isSyncingScroll = true;
+      _roundsVerticalController.jumpTo(_verticalController.offset);
+      _isSyncingScroll = false;
+    }
+  }
+
+  void _syncRoundsToPlayers() {
+    if (!_isSyncingScroll && _verticalController.hasClients) {
+      _isSyncingScroll = true;
+      _verticalController.jumpTo(_roundsVerticalController.offset);
+      _isSyncingScroll = false;
+    }
   }
 
   void _updateCurrentRound() {
@@ -395,8 +417,11 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
 
   @override
   void dispose() {
+    _verticalController.removeListener(_syncPlayersToRounds);
+    _roundsVerticalController.removeListener(_syncRoundsToPlayers);
     _verticalController.dispose();
     _horizontalController.dispose();
+    _roundsVerticalController.dispose();
     for (var controller in _scoreControllers.values) {
       controller.dispose();
     }
@@ -651,9 +676,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                   Expanded(
                                     child: ListView.builder(
                                       controller: _verticalController,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
                                       itemCount: playerCount,
+                                      padding: const EdgeInsets.only(bottom: 240),
                                       itemBuilder: (context, i) {
                                         final player = widget.selectedPlayers[i];
                                         final total = totals[player.id] ?? 0;
@@ -686,14 +710,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                               ),
                             ),
 
-                            // 2. Scrollable Middle: Round Scores
+                            // 2. Scrollable Middle: Round Scores (horizontal scroll only)
                             Expanded(
                               child: SingleChildScrollView(
                                 controller: _horizontalController,
                                 scrollDirection: Axis.horizontal,
                                 child: SizedBox(
                                   width: scrollableWidth.clamp(
-                                    constraints.maxWidth - nameWidth - 10,
+                                    constraints.maxWidth - nameWidth - (sidePadding * 2),
                                     2000,
                                   ),
                                   child: Column(
@@ -740,105 +764,89 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                                 ),
                                               )
                                             : ListView.builder(
+                                                controller: _roundsVerticalController,
                                                 itemCount: playerCount,
                                                 padding: const EdgeInsets.only(
                                                   bottom: 240,
                                                 ),
                                                 itemBuilder: (context, pIndex) {
-                                                  // Master Synchronizer
-                                                  return NotificationListener<
-                                                    ScrollNotification
-                                                  >(
-                                                    onNotification: (notification) {
-                                                      if (notification
-                                                          is ScrollUpdateNotification) {
-                                                        _verticalController
-                                                            .jumpTo(
-                                                              notification
-                                                                  .metrics
-                                                                  .pixels,
-                                                            );
-                                                      }
-                                                      return false;
-                                                    },
-                                                    child: Container(
-                                                      height: rowHeight,
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                            bottom: 8,
+                                                  return Container(
+                                                    height: rowHeight,
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                          bottom: 8,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white
+                                                          .withValues(
+                                                            alpha: 0.03,
                                                           ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white
-                                                            .withValues(
-                                                              alpha: 0.03,
-                                                            ),
-                                                        border: Border(
-                                                          top: BorderSide(
-                                                            color: Colors.white
-                                                                .withValues(
-                                                                  alpha: 0.05,
-                                                                ),
-                                                          ),
-                                                          bottom: BorderSide(
-                                                            color: Colors.white
-                                                                .withValues(
-                                                                  alpha: 0.05,
-                                                                ),
-                                                          ),
+                                                      border: Border(
+                                                        top: BorderSide(
+                                                          color: Colors.white
+                                                              .withValues(
+                                                                alpha: 0.05,
+                                                              ),
+                                                        ),
+                                                        bottom: BorderSide(
+                                                          color: Colors.white
+                                                              .withValues(
+                                                                alpha: 0.05,
+                                                              ),
                                                         ),
                                                       ),
-                                                      child: Row(
-                                                        children: List.generate(roundCount, (
-                                                          rIndex,
-                                                        ) {
-                                                          final player = widget
-                                                              .selectedPlayers[pIndex];
-                                                          final score = rIndex < _rounds.length
-                                                              ? (_rounds[rIndex][player.id] ?? 0)
-                                                              : (_currentRound?[player.id] ?? 0);
-                                                          final isCurrentRound = rIndex == _rounds.length && _currentRound != null;
-                                                          return SizedBox(
-                                                            width: roundWidth,
-                                                            child: Container(
-                                                              decoration: isCurrentRound
-                                                                  ? BoxDecoration(
-                                                                      color: const Color(0xFF30E8BF).withValues(alpha: 0.1),
-                                                                      border: Border.all(
-                                                                        color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
-                                                                        width: 1,
-                                                                      ),
-                                                                    )
-                                                                  : null,
-                                                              child: Center(
-                                                                child: Text(
-                                                                  score == 0
-                                                                      ? '0'
-                                                                      : (score > 0
-                                                                            ? '+$score'
-                                                                            : '$score'),
-                                                                  style: TextStyle(
-                                                                    color:
-                                                                        score < 0
-                                                                        ? const Color(
-                                                                            0xFF30E8BF,
-                                                                          )
-                                                                        : Colors.white.withValues(
-                                                                            alpha:
-                                                                                0.7,
-                                                                          ),
-                                                                    fontSize: 15,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontFamily:
-                                                                        'monospace',
-                                                                  ),
+                                                    ),
+                                                    child: Row(
+                                                      children: List.generate(roundCount, (
+                                                        rIndex,
+                                                      ) {
+                                                        final player = widget
+                                                            .selectedPlayers[pIndex];
+                                                        final score = rIndex < _rounds.length
+                                                            ? (_rounds[rIndex][player.id] ?? 0)
+                                                            : (_currentRound?[player.id] ?? 0);
+                                                        final isCurrentRound = rIndex == _rounds.length && _currentRound != null;
+                                                        return SizedBox(
+                                                          width: roundWidth,
+                                                          child: Container(
+                                                            decoration: isCurrentRound
+                                                                ? BoxDecoration(
+                                                                    color: const Color(0xFF30E8BF).withValues(alpha: 0.1),
+                                                                    border: Border.all(
+                                                                      color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
+                                                                      width: 1,
+                                                                    ),
+                                                                  )
+                                                                : null,
+                                                            child: Center(
+                                                              child: Text(
+                                                                score == 0
+                                                                    ? '0'
+                                                                    : (score > 0
+                                                                          ? '+$score'
+                                                                          : '$score'),
+                                                                style: TextStyle(
+                                                                  color:
+                                                                      score < 0
+                                                                      ? const Color(
+                                                                          0xFF30E8BF,
+                                                                        )
+                                                                      : Colors.white.withValues(
+                                                                          alpha:
+                                                                              0.7,
+                                                                        ),
+                                                                  fontSize: 15,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontFamily:
+                                                                      'monospace',
                                                                 ),
                                                               ),
                                                             ),
-                                                          );
-                                                        }),
-                                                      ),
+                                                          ),
+                                                        );
+                                                      }),
                                                     ),
                                                   );
                                                 },
@@ -861,200 +869,197 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
 
           // Score Input Section
           Positioned(
-            left: 24,
-            right: 24,
-            bottom: 32,
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: _isInputExpanded
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Preset Buttons - Row 1
-                      Row(
-                        children: [
-                          Expanded(child: _buildPresetButton(0)),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(-40, label: '-40')),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(-140, label: '-140')),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(-500, label: 'RUMMY', isSpecial: true)),
-                        ],
+                ? Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B263B).withValues(alpha: 0.95),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
                       ),
-                      const SizedBox(height: 8),
-                      // Preset Buttons - Row 2
-                      Row(
-                        children: [
-                          Expanded(child: _buildPresetButton(5, label: '+5')),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(10, label: '+10')),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(15, label: '+15')),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(20, label: '+20')),
-                        ],
+                      border: Border(
+                        top: BorderSide(
+                          color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
+                          width: 1,
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      // Preset Buttons - Row 3
-                      Row(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(child: _buildPresetButton(30, label: '+30')),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(50, label: '+50')),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(100, label: '+100')),
-                          const SizedBox(width: 8),
-                          Expanded(child: _buildPresetButton(200, label: '+200')),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Input Field and Action Button
-                      Row(
-                        children: [
-                          // Score Input Field
-                          Expanded(
-                            flex: 2,
-                            child: Container(
-                              height: 56, // Match button height (padding vertical 16 + content)
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Center(
-                                child: TextField(
-                                  controller: _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id],
-                                  keyboardType: const TextInputType.numberWithOptions(signed: true),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Color(0xFF30E8BF),
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    fontFamily: 'monospace',
-                                  ),
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
-                                    isDense: true,
-                                    hintText: '0',
-                                    hintStyle: TextStyle(
-                                      color: Colors.white24,
-                                      fontSize: 24,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    final controller = _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id]!;
-                                    // Select all text when tapped
-                                    controller.selection = TextSelection(
-                                      baseOffset: 0,
-                                      extentOffset: controller.text.length,
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // ADD POINT or COMPLETE ROUND Button
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton(
-                              onPressed: _isOnLastPlayer() ? _finishRound : _addPoint,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _isOnLastPlayer()
-                                    ? const Color(0xFFFFD700) // Gold
-                                    : const Color(0xFF30E8BF),
-                                foregroundColor: _isOnLastPlayer() ? Colors.black : Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                elevation: 8,
-                                shadowColor: _isOnLastPlayer()
-                                    ? const Color(0xFFFFD700).withValues(alpha: 0.5)
-                                    : const Color(0xFF30E8BF).withValues(alpha: 0.5),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _isOnLastPlayer() ? Icons.check_circle_rounded : Icons.add_rounded,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _isOnLastPlayer() ? 'COMPLETE' : 'ADD POINT',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 2,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _expandInput,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF30E8BF),
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            elevation: 8,
-                            shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          // Preset Buttons - Row 1
+                          Row(
                             children: [
-                              Icon(Icons.add_rounded, size: 24),
-                              SizedBox(width: 4),
-                              Text(
-                                'ADD ROUND',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2,
+                              Expanded(child: _buildPresetButton(0)),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(-40, label: '-40')),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(-140, label: '-140')),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(-500, label: 'RUMMY', isSpecial: true)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Preset Buttons - Row 2
+                          Row(
+                            children: [
+                              Expanded(child: _buildPresetButton(5, label: '+5')),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(10, label: '+10')),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(15, label: '+15')),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(20, label: '+20')),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Preset Buttons - Row 3
+                          Row(
+                            children: [
+                              Expanded(child: _buildPresetButton(30, label: '+30')),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(50, label: '+50')),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(100, label: '+100')),
+                              const SizedBox(width: 8),
+                              Expanded(child: _buildPresetButton(200, label: '+200')),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Input Field and Action Button
+                          Row(
+                            children: [
+                              // Score Input Field
+                              Expanded(
+                                flex: 2,
+                                child: Container(
+                                  height: 56, // Match button height (padding vertical 16 + content)
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: TextField(
+                                      controller: _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id],
+                                      keyboardType: const TextInputType.numberWithOptions(signed: true),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Color(0xFF30E8BF),
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w900,
+                                        fontFamily: 'monospace',
+                                      ),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                        isDense: true,
+                                        hintText: '0',
+                                        hintStyle: TextStyle(
+                                          color: Colors.white24,
+                                          fontSize: 24,
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        final controller = _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id]!;
+                                        // Select all text when tapped
+                                        controller.selection = TextSelection(
+                                          baseOffset: 0,
+                                          extentOffset: controller.text.length,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // ADD POINT or COMPLETE ROUND Button
+                              Expanded(
+                                flex: 2,
+                                child: ElevatedButton(
+                                  onPressed: _isOnLastPlayer() ? _finishRound : _addPoint,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _isOnLastPlayer()
+                                        ? const Color(0xFFFFD700) // Gold
+                                        : const Color(0xFF30E8BF),
+                                    foregroundColor: _isOnLastPlayer() ? Colors.black : Colors.black,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    elevation: 8,
+                                    shadowColor: _isOnLastPlayer()
+                                        ? const Color(0xFFFFD700).withValues(alpha: 0.5)
+                                        : const Color(0xFF30E8BF).withValues(alpha: 0.5),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _isOnLastPlayer() ? Icons.check_circle_rounded : Icons.add_rounded,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _isOnLastPlayer() ? 'COMPLETE' : 'ADD POINT',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 2,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
-                      if (_rounds.isNotEmpty) ...[
-                        const SizedBox(width: 8),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _declareWinner,
+                            onPressed: _expandInput,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFFD700), // Gold
+                              backgroundColor: const Color(0xFF30E8BF),
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               elevation: 8,
-                              shadowColor: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                              shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.emoji_events_rounded, size: 24),
-                                SizedBox(width: 8),
+                                Icon(Icons.add_rounded, size: 24),
+                                SizedBox(width: 3),
                                 Text(
-                                  'FINISH',
+                                  'ADD ROUND',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 2,
@@ -1064,9 +1069,43 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                             ),
                           ),
                         ),
+                        if (_rounds.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _declareWinner,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFFD700), // Gold
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                elevation: 8,
+                                shadowColor: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.emoji_events_rounded, size: 24),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'FINISH',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
+
                   ),
+                  
           ),
         ],
       ),
