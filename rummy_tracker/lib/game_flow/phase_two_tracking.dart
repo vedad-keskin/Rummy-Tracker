@@ -293,38 +293,104 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
   }
 
   void _declareWinner() {
-    final totals = _getTotals();
-    String? winnerId;
-    int maxNegative = 1;
-
-    totals.forEach((playerId, score) {
-      if (winnerId == null || score < maxNegative) {
-        maxNegative = score;
-        winnerId = playerId;
-      }
-    });
-
-    if (winnerId != null) {
-      // Clear game state when game is finished
-      _gameStateService.clearGameState();
-      
-      final winner = widget.selectedPlayers.firstWhere((p) => p.id == winnerId);
-      // Create rankings list with all players and their scores
-      final rankings = widget.selectedPlayers.map((player) {
-        return MapEntry(player, totals[player.id] ?? 0);
-      }).toList()
-        ..sort((a, b) => a.value.compareTo(b.value)); // Sort by score (lowest first)
-      
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PhaseThreeWinScreen(
-            winner: winner,
-            rankings: rankings,
+    showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1B263B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
           ),
         ),
-      );
-    }
+        title: Text(
+          'FINISH GAME?',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            fontFamily: 'serif',
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to finish the game and declare the winner?',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 14,
+            fontFamily: 'serif',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'CANCEL',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'FINISH',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true) {
+        final totals = _getTotals();
+        String? winnerId;
+        int maxNegative = 1;
+
+        totals.forEach((playerId, score) {
+          if (winnerId == null || score < maxNegative) {
+            maxNegative = score;
+            winnerId = playerId;
+          }
+        });
+
+        if (winnerId != null) {
+          // Clear game state when game is finished
+          _gameStateService.clearGameState();
+          
+          final winner = widget.selectedPlayers.firstWhere((p) => p.id == winnerId);
+          // Create rankings list with all players and their scores
+          final rankings = widget.selectedPlayers.map((player) {
+            return MapEntry(player, totals[player.id] ?? 0);
+          }).toList()
+            ..sort((a, b) => a.value.compareTo(b.value)); // Sort by score (lowest first)
+          
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PhaseThreeWinScreen(
+                winner: winner,
+                rankings: rankings,
+              ),
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -937,7 +1003,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_rounded, size: 24),
-                              SizedBox(width: 8),
+                              SizedBox(width: 4),
                               Text(
                                 'ADD ROUND',
                                 style: TextStyle(
