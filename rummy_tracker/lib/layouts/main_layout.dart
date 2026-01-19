@@ -354,7 +354,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 _easterEggTimer?.cancel();
               },
               child: Text(
-                'Rummy Tracker v1.3.1',
+                'Rummy Tracker v1.4.0',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.24),
                   fontSize: 12,

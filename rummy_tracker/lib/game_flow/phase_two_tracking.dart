@@ -555,15 +555,21 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                 ),
               ),
               child: Center(
-                child: Text(
-                  '$rank',
-                  style: TextStyle(
-                    color: getRankColor(rank),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    fontFamily: 'monospace',
-                  ),
-                ),
+                child: rank == 1
+                    ? const Icon(
+                        Icons.emoji_events_rounded,
+                        color: Color(0xFFFFD700),
+                        size: 16,
+                      )
+                    : Text(
+                        '$rank',
+                        style: TextStyle(
+                          color: getRankColor(rank),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
               ),
             ),
             const SizedBox(width: 6),
