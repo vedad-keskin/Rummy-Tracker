@@ -22,7 +22,7 @@ class TeamCreditsDialog extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
+                  color: Colors.black.withValues(alpha: 0.9),
                   blurRadius: 40,
                   spreadRadius: -10,
                 ),
@@ -80,7 +80,7 @@ class TeamCreditsDialog extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.1),
                         width: 1,
                       ),
                     ),
@@ -159,12 +159,12 @@ class TeamCreditsDialog extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.8),
+          color: Colors.black.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.15),
+              color: color.withValues(alpha: 0.1),
               blurRadius: 12,
               spreadRadius: 2,
             ),
