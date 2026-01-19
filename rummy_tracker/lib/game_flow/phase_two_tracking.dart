@@ -889,6 +889,19 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                           const SizedBox(width: 8),
                           Expanded(child: _buildPresetButton(10, label: '+10')),
                           const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(15, label: '+15')),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(20, label: '+20')),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Preset Buttons - Row 3
+                      Row(
+                        children: [
+                          Expanded(child: _buildPresetButton(30, label: '+30')),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildPresetButton(50, label: '+50')),
+                          const SizedBox(width: 8),
                           Expanded(child: _buildPresetButton(100, label: '+100')),
                           const SizedBox(width: 8),
                           Expanded(child: _buildPresetButton(200, label: '+200')),
@@ -902,7 +915,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                           Expanded(
                             flex: 2,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              height: 56, // Match button height (padding vertical 16 + content)
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(20),
@@ -911,32 +925,36 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> {
                                   width: 2,
                                 ),
                               ),
-                              child: TextField(
-                                controller: _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id],
-                                keyboardType: const TextInputType.numberWithOptions(signed: true),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color(0xFF30E8BF),
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  fontFamily: 'monospace',
-                                ),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: '0',
-                                  hintStyle: TextStyle(
-                                    color: Colors.white24,
+                              child: Center(
+                                child: TextField(
+                                  controller: _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id],
+                                  keyboardType: const TextInputType.numberWithOptions(signed: true),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFF30E8BF),
                                     fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'monospace',
                                   ),
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                    isDense: true,
+                                    hintText: '0',
+                                    hintStyle: TextStyle(
+                                      color: Colors.white24,
+                                      fontSize: 24,
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    final controller = _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id]!;
+                                    // Select all text when tapped
+                                    controller.selection = TextSelection(
+                                      baseOffset: 0,
+                                      extentOffset: controller.text.length,
+                                    );
+                                  },
                                 ),
-                                onTap: () {
-                                  final controller = _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id]!;
-                                  // Select all text when tapped
-                                  controller.selection = TextSelection(
-                                    baseOffset: 0,
-                                    extentOffset: controller.text.length,
-                                  );
-                                },
                               ),
                             ),
                           ),
