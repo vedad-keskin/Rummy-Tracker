@@ -30,10 +30,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   final GameStateService _gameStateService = GameStateService();
   bool _isSyncingScroll = false;
   List<int> _sortedPlayerIndices = [];
+  late List<Player> _activePlayers; // Mutable list of players still in the game
 
   @override
   void initState() {
     super.initState();
+    
+    // Initialize mutable players list
+    _activePlayers = List.from(widget.selectedPlayers);
     
     // Load saved state if available
     if (widget.savedState != null) {
@@ -44,7 +48,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       _isInputExpanded = savedState.isInputExpanded;
       
       // Initialize controllers with saved scores or defaults
-      for (var player in widget.selectedPlayers) {
+      for (var player in _activePlayers) {
         final savedScore = savedState.scoreControllers[player.id] ?? '0';
         final controller = TextEditingController(text: savedScore);
         _scoreControllers[player.id] = controller;
@@ -54,7 +58,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       }
     } else {
       // Initialize fresh controllers
-      for (var player in widget.selectedPlayers) {
+      for (var player in _activePlayers) {
         final controller = TextEditingController(text: '0');
         _scoreControllers[player.id] = controller;
         controller.addListener(() {
@@ -64,7 +68,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     }
     
     // Initialize sorted indices (original order)
-    _sortedPlayerIndices = List.generate(widget.selectedPlayers.length, (i) => i);
+    _sortedPlayerIndices = List.generate(_activePlayers.length, (i) => i);
     
     // If we have saved rounds, sort by current totals
     if (_rounds.isNotEmpty) {
@@ -101,7 +105,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     final Map<String, int> roundScores = {};
     bool hasAnyScore = false;
 
-    for (var player in widget.selectedPlayers) {
+    for (var player in _activePlayers) {
       final value = int.tryParse(_scoreControllers[player.id]!.text) ?? 0;
       roundScores[player.id] = value;
       if (value != 0) {
@@ -120,8 +124,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       });
     }
     
-    // Sort players by current totals (including in-progress round) without animation
-    _sortPlayersByScore(animate: false);
+    // Don't sort during point entry - order stays locked until round is complete
     
     // Save state whenever round is updated
     _saveGameState();
@@ -134,7 +137,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     }
     
     final gameState = GameState(
-      selectedPlayerIds: widget.selectedPlayers.map((p) => p.id).toList(),
+      selectedPlayerIds: _activePlayers.map((p) => p.id).toList(),
       rounds: _rounds,
       currentRound: _currentRound,
       currentPlayerIndex: _currentPlayerIndex,
@@ -146,7 +149,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   }
 
   bool _isOnLastPlayer() {
-    return _currentPlayerIndex == widget.selectedPlayers.length - 1;
+    // Check if current player is at the last position in sorted order
+    final currentSortedPosition = _sortedPlayerIndices.indexOf(_currentPlayerIndex);
+    return currentSortedPosition == _sortedPlayerIndices.length - 1;
   }
 
   String? _getWinningPlayerId(Map<String, int> totals) {
@@ -167,19 +172,24 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   Map<String, int> _getTotals() {
     final Map<String, int> totals = {};
-    for (var player in widget.selectedPlayers) {
+    for (var player in _activePlayers) {
       totals[player.id] = 0;
     }
     // Add completed rounds
     for (var round in _rounds) {
       round.forEach((playerId, score) {
-        totals[playerId] = (totals[playerId] ?? 0) + score;
+        // Only include scores for active players
+        if (totals.containsKey(playerId)) {
+          totals[playerId] = (totals[playerId] ?? 0) + score;
+        }
       });
     }
     // Add current round being built (if exists)
     if (_currentRound != null) {
       _currentRound!.forEach((playerId, score) {
-        totals[playerId] = (totals[playerId] ?? 0) + score;
+        if (totals.containsKey(playerId)) {
+          totals[playerId] = (totals[playerId] ?? 0) + score;
+        }
       });
     }
     return totals;
@@ -189,10 +199,10 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     final totals = _getTotals();
     
     // Create list of indices sorted by score (lowest first = winning)
-    final newOrder = List.generate(widget.selectedPlayers.length, (i) => i);
+    final newOrder = List.generate(_activePlayers.length, (i) => i);
     newOrder.sort((a, b) {
-      final scoreA = totals[widget.selectedPlayers[a].id] ?? 0;
-      final scoreB = totals[widget.selectedPlayers[b].id] ?? 0;
+      final scoreA = totals[_activePlayers[a].id] ?? 0;
+      final scoreB = totals[_activePlayers[b].id] ?? 0;
       return scoreA.compareTo(scoreB);
     });
     
@@ -211,7 +221,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   }
 
   void _applyPreset(int value) {
-    final currentPlayer = widget.selectedPlayers[_currentPlayerIndex];
+    final currentPlayer = _activePlayers[_currentPlayerIndex];
     setState(() {
       _scoreControllers[currentPlayer.id]!.text = value.toString();
       _highlightedPreset = value;
@@ -227,10 +237,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   }
 
   void _addPoint() {
-    // Move to next player if available
-    if (_currentPlayerIndex < widget.selectedPlayers.length - 1) {
+    // Find current player's position in the sorted list
+    final currentSortedPosition = _sortedPlayerIndices.indexOf(_currentPlayerIndex);
+    
+    // Move to next player in sorted order if available
+    if (currentSortedPosition < _sortedPlayerIndices.length - 1) {
       setState(() {
-        _currentPlayerIndex++;
+        // Get the player index at the next sorted position
+        _currentPlayerIndex = _sortedPlayerIndices[currentSortedPosition + 1];
       });
       _saveGameState();
     }
@@ -239,7 +253,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   void _finishRound() {
     final Map<String, int> roundScores = {};
 
-    for (var player in widget.selectedPlayers) {
+    for (var player in _activePlayers) {
       final value = int.tryParse(_scoreControllers[player.id]!.text) ?? 0;
       roundScores[player.id] = value;
     }
@@ -247,10 +261,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     setState(() {
       _rounds.add(roundScores);
       // Reset all scores to 0
-      for (var player in widget.selectedPlayers) {
+      for (var player in _activePlayers) {
         _scoreControllers[player.id]!.text = '0';
       }
-      _currentPlayerIndex = 0;
       _isInputExpanded = false;
       _currentRound = null;
     });
@@ -281,13 +294,137 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   }
 
   void _expandInput() {
-    setState(() {
-      _isInputExpanded = true;
-      _currentPlayerIndex = 0;
-    });
     // Ensure players are sorted when starting a new round
     _sortPlayersByScore(animate: false);
+    setState(() {
+      _isInputExpanded = true;
+      // Start with the first player in sorted order
+      _currentPlayerIndex = _sortedPlayerIndices.isNotEmpty ? _sortedPlayerIndices[0] : 0;
+    });
     _saveGameState();
+  }
+
+  void _showRemovePlayerDialog(Player player, int playerIndex) {
+    // Don't allow removal if only 2 players remain
+    if (_activePlayers.length <= 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Cannot remove player. Minimum 2 players required.'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+
+    showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1B263B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        title: Text(
+          'REMOVE PLAYER?',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            fontFamily: 'serif',
+          ),
+        ),
+        content: Text(
+          'Remove ${player.name.toUpperCase()} from the game? This action cannot be undone.',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 14,
+            fontFamily: 'serif',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'CANCEL',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'REMOVE',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true) {
+        _removePlayer(player, playerIndex);
+      }
+    });
+  }
+
+  void _removePlayer(Player player, int playerIndex) {
+    setState(() {
+      // Remove from active players list
+      _activePlayers.removeAt(playerIndex);
+      
+      // Dispose and remove the score controller
+      _scoreControllers[player.id]?.dispose();
+      _scoreControllers.remove(player.id);
+      
+      // Remove from current round if exists
+      _currentRound?.remove(player.id);
+      
+      // Adjust current player index if needed
+      if (_currentPlayerIndex >= _activePlayers.length) {
+        _currentPlayerIndex = _activePlayers.length - 1;
+      }
+      if (_currentPlayerIndex < 0) {
+        _currentPlayerIndex = 0;
+      }
+      
+      // Rebuild sorted indices
+      _sortedPlayerIndices = List.generate(_activePlayers.length, (i) => i);
+    });
+    
+    // Re-sort players
+    _sortPlayersByScore(animate: false);
+    
+    // Save updated game state
+    _saveGameState();
+    
+    // Show confirmation snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${player.name} removed from game'),
+        backgroundColor: const Color(0xFF1B263B),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<bool> _onWillPop() async {
@@ -443,9 +580,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           // Clear game state when game is finished
           _gameStateService.clearGameState();
           
-          final winner = widget.selectedPlayers.firstWhere((p) => p.id == winnerId);
+          final winner = _activePlayers.firstWhere((p) => p.id == winnerId);
           // Create rankings list with all players and their scores
-          final rankings = widget.selectedPlayers.map((player) {
+          final rankings = _activePlayers.map((player) {
             return MapEntry(player, totals[player.id] ?? 0);
           }).toList()
             ..sort((a, b) => a.value.compareTo(b.value)); // Sort by score (lowest first)
@@ -507,7 +644,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     );
   }
 
-  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0, bool isHighlighted = false, bool isWinner = false, int? rank}) {
+  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0, bool isHighlighted = false, bool isWinner = false, int? rank, VoidCallback? onRemove}) {
     final isNegative = total < 0;
     
     // Rank colors: gold, silver, bronze for top 3
@@ -541,7 +678,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           width: (isWinner || isHighlighted) ? 2 : 1,
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.only(left: 8, right: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -580,27 +717,18 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
             const SizedBox(width: 6),
           ],
           Expanded(
-            child: Row(
-              children: [
-                if (isWinner) ...[
-    
-                ],
-                Expanded(
-                  child: Text(
-                    player.name.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: isWinner
-                          ? const Color(0xFFFFD700)
-                          : (isHighlighted ? Colors.white : Colors.white70),
-                      fontSize: 11,
-                      fontWeight: isWinner ? FontWeight.w900 : FontWeight.bold,
-                      fontFamily: 'serif',
-                    ),
-                  ),
-                ),
-              ],
+            child: Text(
+              player.name.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isWinner
+                    ? const Color(0xFFFFD700)
+                    : (isHighlighted ? Colors.white : Colors.white70),
+                fontSize: 11,
+                fontWeight: isWinner ? FontWeight.w900 : FontWeight.bold,
+                fontFamily: 'serif',
+              ),
             ),
           ),
           const SizedBox(width: 4),
@@ -615,6 +743,27 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
               fontFamily: 'monospace',
             ),
           ),
+          // Small delete button
+          if (onRemove != null) ...[
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: onRemove,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 14,
+                  color: Colors.red.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -749,7 +898,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                       const double rowHeight = 52.0;
                       final double sidePadding = 12.0;
 
-                      final int playerCount = widget.selectedPlayers.length;
+                      final int playerCount = _activePlayers.length;
                       final int roundCount = _rounds.length + (_currentRound != null ? 1 : 0);
                       final double scrollableWidth = roundCount * roundWidth;
 
@@ -772,7 +921,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                       itemBuilder: (context, i) {
                                         // Always use sorted order (players stay sorted by points)
                                         final playerIndex = _sortedPlayerIndices[i];
-                                        final player = widget.selectedPlayers[playerIndex];
+                                        final player = _activePlayers[playerIndex];
                                         final total = totals[player.id] ?? 0;
                                         final isHighlighted = _isInputExpanded && playerIndex == _currentPlayerIndex;
                                         final winningPlayerId = _getWinningPlayerId(totals);
@@ -801,6 +950,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                               isHighlighted: isHighlighted,
                                               isWinner: isWinner,
                                               rank: rank,
+                                              onRemove: () => _showRemovePlayerDialog(player, playerIndex),
                                             ),
                                           ),
                                         );
@@ -905,8 +1055,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                                       children: List.generate(roundCount, (
                                                         rIndex,
                                                       ) {
-                                                        final player = widget
-                                                            .selectedPlayers[playerIndex];
+                                                        final player = _activePlayers[playerIndex];
                                                         final score = rIndex < _rounds.length
                                                             ? (_rounds[rIndex][player.id] ?? 0)
                                                             : (_currentRound?[player.id] ?? 0);
@@ -1064,7 +1213,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                   ),
                                   child: Center(
                                     child: TextField(
-                                      controller: _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id],
+                                      controller: _scoreControllers[_activePlayers[_currentPlayerIndex].id],
                                       keyboardType: const TextInputType.numberWithOptions(signed: true),
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
@@ -1084,7 +1233,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                         ),
                                       ),
                                       onTap: () {
-                                        final controller = _scoreControllers[widget.selectedPlayers[_currentPlayerIndex].id]!;
+                                        final controller = _scoreControllers[_activePlayers[_currentPlayerIndex].id]!;
                                         // Select all text when tapped
                                         controller.selection = TextSelection(
                                           baseOffset: 0,
