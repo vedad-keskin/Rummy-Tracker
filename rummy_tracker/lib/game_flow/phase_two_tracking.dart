@@ -104,6 +104,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     
     final Map<String, int> roundScores = {};
     bool hasAnyScore = false;
+    final bool wasNull = _currentRound == null;
 
     for (var player in _activePlayers) {
       final value = int.tryParse(_scoreControllers[player.id]!.text) ?? 0;
@@ -118,6 +119,19 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       setState(() {
         _currentRound = roundScores;
       });
+      
+      // Scroll to right when first score is entered (round column appears)
+      if (wasNull) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (_horizontalController.hasClients) {
+            _horizontalController.animateTo(
+              _horizontalController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
     } else {
       setState(() {
         _currentRound = null;
@@ -302,17 +316,26 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       _currentPlayerIndex = _sortedPlayerIndices.isNotEmpty ? _sortedPlayerIndices[0] : 0;
     });
     _saveGameState();
+    
+    // Scroll horizontally to the right to show the new round column
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_horizontalController.hasClients) {
+        _horizontalController.animateTo(
+          _horizontalController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   void _showRemovePlayerDialog(Player player, int playerIndex) {
     // Don't allow removal if only 2 players remain
     if (_activePlayers.length <= 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Cannot remove player. Minimum 2 players required.'),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        const SnackBar(
+          content: Text('Minimum 2 players required'),
+          duration: Duration(seconds: 2),
         ),
       );
       return;
@@ -418,13 +441,23 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     // Show confirmation snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${player.name} removed from game'),
-        backgroundColor: const Color(0xFF1B263B),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        content: Text('${player.name} removed'),
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  void _cancelRound() {
+    setState(() {
+      // Reset all scores to 0
+      for (var player in _activePlayers) {
+        _scoreControllers[player.id]!.text = '0';
+      }
+      _currentPlayerIndex = _sortedPlayerIndices.isNotEmpty ? _sortedPlayerIndices[0] : 0;
+      _isInputExpanded = false;
+      _currentRound = null;
+    });
+    _saveGameState();
   }
 
   Future<bool> _onWillPop() async {
@@ -1185,6 +1218,51 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // Player name and cancel button row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Current player name
+                              Expanded(
+                                child: Text(
+                                  _activePlayers[_currentPlayerIndex].name.toUpperCase(),
+                                  style: TextStyle(
+                                    color: const Color(0xFF30E8BF),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1,
+                                    fontFamily: 'serif',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Cancel button
+                              GestureDetector(
+                                onTap: _cancelRound,
+                                behavior: HitTestBehavior.opaque,
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.close_rounded,
+                                    size: 18,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
                           // Preset Buttons - Row 1
                           Row(
                             children: [
