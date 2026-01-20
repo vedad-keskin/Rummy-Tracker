@@ -256,11 +256,34 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     
     // Move to next player in sorted order if available
     if (currentSortedPosition < _sortedPlayerIndices.length - 1) {
+      final nextSortedPosition = currentSortedPosition + 1;
       setState(() {
         // Get the player index at the next sorted position
-        _currentPlayerIndex = _sortedPlayerIndices[currentSortedPosition + 1];
+        _currentPlayerIndex = _sortedPlayerIndices[nextSortedPosition];
       });
       _saveGameState();
+      
+      // Scroll to show the new current player at top
+      const double rowHeight = 72.0;
+      const double rowMargin = 8.0;
+      final double scrollTarget = nextSortedPosition * (rowHeight + rowMargin);
+      
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (_verticalController.hasClients) {
+          _verticalController.animateTo(
+            scrollTarget.clamp(0, _verticalController.position.maxScrollExtent),
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        }
+        if (_roundsVerticalController.hasClients) {
+          _roundsVerticalController.animateTo(
+            scrollTarget.clamp(0, _roundsVerticalController.position.maxScrollExtent),
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     }
   }
 
@@ -980,7 +1003,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                     child: ListView.builder(
                                       controller: _verticalController,
                                       itemCount: playerCount,
-                                      padding: const EdgeInsets.only(bottom: 240),
+                                      padding: const EdgeInsets.only(bottom: 400),
                                       itemBuilder: (context, i) {
                                         // Always use sorted order (players stay sorted by points)
                                         final playerIndex = _sortedPlayerIndices[i];
@@ -1081,7 +1104,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                                 controller: _roundsVerticalController,
                                                 itemCount: playerCount,
                                                 padding: const EdgeInsets.only(
-                                                  bottom: 240,
+                                                  bottom: 400,
                                                 ),
                                                 itemBuilder: (context, pIndex) {
                                                   // Always use sorted order (players stay sorted by points)
