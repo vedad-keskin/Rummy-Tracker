@@ -359,9 +359,39 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     
     // Don't allow removal if only 2 players remain
     if (_activePlayers.length <= 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
         SnackBar(
-          content: Text(languageService.translate('minimum_players_required')),
+          content: Row(
+            children: [
+              const Icon(
+                Icons.warning_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  languageService.translate('minimum_players_required'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'serif',
+                    fontWeight: FontWeight.w100,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          margin: const EdgeInsets.all(16),
+          elevation: 10,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -468,9 +498,39 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     _saveGameState();
     
     // Show confirmation snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
-        content: Text('${player.name} ${languageService.translate('player_removed')}'),
+        content: Row(
+          children: [
+            const Icon(
+              Icons.person_remove_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '${player.name} ${languageService.translate('player_removed')}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'serif',
+                  fontWeight: FontWeight.w100,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        margin: const EdgeInsets.all(16),
+        elevation: 10,
         duration: const Duration(seconds: 2),
       ),
     );
