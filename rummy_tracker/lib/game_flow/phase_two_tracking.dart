@@ -120,6 +120,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       });
     }
     
+    // Sort players by current totals (including in-progress round) without animation
+    _sortPlayersByScore(animate: false);
+    
     // Save state whenever round is updated
     _saveGameState();
   }
@@ -282,6 +285,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       _isInputExpanded = true;
       _currentPlayerIndex = 0;
     });
+    // Ensure players are sorted when starting a new round
+    _sortPlayersByScore(animate: false);
     _saveGameState();
   }
 
@@ -765,8 +770,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                       itemCount: playerCount,
                                       padding: const EdgeInsets.only(bottom: 240),
                                       itemBuilder: (context, i) {
-                                        // Use sorted order when not in input mode
-                                        final playerIndex = _isInputExpanded ? i : _sortedPlayerIndices[i];
+                                        // Always use sorted order (players stay sorted by points)
+                                        final playerIndex = _sortedPlayerIndices[i];
                                         final player = widget.selectedPlayers[playerIndex];
                                         final total = totals[player.id] ?? 0;
                                         final isHighlighted = _isInputExpanded && playerIndex == _currentPlayerIndex;
@@ -774,8 +779,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                         final isWinner = !_isInputExpanded && 
                                                          _rounds.isNotEmpty && 
                                                          winningPlayerId == player.id;
-                                        // Show rank when not in input mode and rounds exist
-                                        final rank = !_isInputExpanded && _rounds.isNotEmpty ? i + 1 : null;
+                                        // Show rank when rounds exist or current round has scores
+                                        final hasScores = _rounds.isNotEmpty || _currentRound != null;
+                                        final rank = hasScores ? i + 1 : null;
                                         return GestureDetector(
                                           onTap: () {
                                             if (_isInputExpanded) {
@@ -865,8 +871,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                                   bottom: 240,
                                                 ),
                                                 itemBuilder: (context, pIndex) {
-                                                  // Use sorted order when not in input mode
-                                                  final playerIndex = _isInputExpanded ? pIndex : _sortedPlayerIndices[pIndex];
+                                                  // Always use sorted order (players stay sorted by points)
+                                                  final playerIndex = _sortedPlayerIndices[pIndex];
                                                   return AnimatedContainer(
                                                     duration: const Duration(milliseconds: 400),
                                                     curve: Curves.easeOutCubic,
