@@ -644,7 +644,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     );
   }
 
-  Widget _buildPlayerRowCell(Player player, int total, {double height = 52.0, bool isHighlighted = false, bool isWinner = false, int? rank, VoidCallback? onRemove}) {
+  Widget _buildPlayerRowCell(Player player, int total, {double height = 72.0, bool isHighlighted = false, bool isWinner = false, int? rank, VoidCallback? onRemove}) {
     final isNegative = total < 0;
     
     // Rank colors: gold, silver, bronze for top 3
@@ -678,92 +678,122 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           width: (isWinner || isHighlighted) ? 2 : 1,
         ),
       ),
-      padding: const EdgeInsets.only(left: 8, right: 4),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Rank badge
-          if (rank != null) ...[
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: getRankColor(rank)!.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: getRankColor(rank)!.withValues(alpha: 0.6),
-                  width: 1,
+          // Top row: Name + Delete button
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  player.name.toUpperCase(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isWinner
+                        ? const Color(0xFFFFD700)
+                        : (isHighlighted ? Colors.white : Colors.white),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'serif',
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
-              child: Center(
-                child: rank == 1
-                    ? const Icon(
-                        Icons.emoji_events_rounded,
-                        color: Color(0xFFFFD700),
-                        size: 16,
-                      )
-                    : Text(
-                        '$rank',
+              if (onRemove != null) ...[
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: onRemove,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 12,
+                      color: Colors.red.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          // Bottom row: Rank + Points
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Rank badge
+              if (rank != null)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: getRankColor(rank)!.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: getRankColor(rank)!.withValues(alpha: 0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // if (rank == 1) ...[
+                      //   const Icon(
+                      //     Icons.emoji_events_rounded,
+                      //     color: Color(0xFFFFD700),
+                      //     size: 12,
+                      //   ),
+                      //   const SizedBox(width: 4),
+                      // ],
+                      Text(
+                        rank == 1 ? '1ST' : rank == 2 ? '2ND' : rank == 3 ? '3RD' : '${rank}TH',
                         style: TextStyle(
                           color: getRankColor(rank),
-                          fontSize: 11,
+                          fontSize: 9,
                           fontWeight: FontWeight.w900,
                           fontFamily: 'monospace',
+                          letterSpacing: 0.5,
                         ),
                       ),
-              ),
-            ),
-            const SizedBox(width: 6),
-          ],
-          Expanded(
-            child: Text(
-              player.name.toUpperCase(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: isWinner
-                    ? const Color(0xFFFFD700)
-                    : (isHighlighted ? Colors.white : Colors.white70),
-                fontSize: 11,
-                fontWeight: isWinner ? FontWeight.w900 : FontWeight.bold,
-                fontFamily: 'serif',
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$total',
-            style: TextStyle(
-              color: isWinner
-                  ? const Color(0xFFFFD700)
-                  : (isNegative ? const Color(0xFF30E8BF) : Colors.white),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
-            ),
-          ),
-          // Small delete button
-          if (onRemove != null) ...[
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: onRemove,
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                width: 24,
-                height: 24,
+                    ],
+                  ),
+                )
+              else
+                const SizedBox(),
+              // Points
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
+                  color: isWinner
+                      ? const Color(0xFFFFD700).withValues(alpha: 0.3)
+                      : (isNegative 
+                          ? const Color(0xFF30E8BF).withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.1)),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  Icons.close_rounded,
-                  size: 14,
-                  color: Colors.red.withValues(alpha: 0.7),
+                child: Text(
+                  '$total p',
+                  style: TextStyle(
+                    color: isWinner
+                        ? const Color(0xFFFFD700)
+                        : (isNegative ? const Color(0xFF30E8BF) : Colors.white),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ],
       ),
     );
@@ -895,7 +925,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                       const double nameWidth = 140.0;
                       const double roundWidth = 70.0;
                       const double headerHeight = 60.0;
-                      const double rowHeight = 52.0;
+                      const double rowHeight = 72.0;
                       final double sidePadding = 12.0;
 
                       final int playerCount = _activePlayers.length;
