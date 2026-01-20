@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
+import 'package:rummy_tracker/offline_db/language_service.dart';
 import 'package:rummy_tracker/layouts/main_layout.dart';
 
 class PhaseThreeWinScreen extends StatefulWidget {
@@ -70,6 +72,8 @@ class _PhaseThreeWinScreenState extends State<PhaseThreeWinScreen>
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
+    
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -162,7 +166,7 @@ class _PhaseThreeWinScreenState extends State<PhaseThreeWinScreen>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      'WINNER',
+                                      languageService.translate('winner'),
                                       style: TextStyle(
                                         color: const Color(0xFFFFD700).withValues(alpha: 0.6),
                                         fontSize: 10,
@@ -223,7 +227,7 @@ class _PhaseThreeWinScreenState extends State<PhaseThreeWinScreen>
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'SESSION RANKINGS',
+                                      languageService.translate('session_rankings'),
                                       style: TextStyle(
                                         color: Colors.white.withValues(alpha: 0.5),
                                         fontSize: 12,
@@ -300,14 +304,14 @@ class _PhaseThreeWinScreenState extends State<PhaseThreeWinScreen>
                             elevation: 8,
                             shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.home_rounded, size: 20),
-                              SizedBox(width: 8),
+                              const Icon(Icons.home_rounded, size: 20),
+                              const SizedBox(width: 8),
                               Text(
-                                'RETURN HOME',
-                                style: TextStyle(
+                                languageService.translate('return_home'),
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 2,
                                   fontSize: 16,

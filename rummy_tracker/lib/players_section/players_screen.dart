@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
+import 'package:rummy_tracker/offline_db/language_service.dart';
 
 class PlayersScreen extends StatefulWidget {
   const PlayersScreen({super.key});
@@ -27,6 +29,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
   }
 
   Future<void> _addPlayer() async {
+    final languageService = context.read<LanguageService>();
     if (_nameController.text.trim().isEmpty) return;
 
     final newName = _nameController.text.trim().toLowerCase();
@@ -39,7 +42,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Player "${_nameController.text.trim()}" already exists!',
+              '"${_nameController.text.trim()}" ${languageService.translate('player_already_exists')}',
               style: const TextStyle(fontFamily: 'serif'),
             ),
             backgroundColor: Colors.redAccent,
@@ -86,6 +89,8 @@ class _PlayersScreenState extends State<PlayersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -132,11 +137,11 @@ class _PlayersScreenState extends State<PlayersScreen> {
                             padding: const EdgeInsets.all(12),
                           ),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'PLAYERS',
+                            languageService.translate('players'),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
@@ -174,7 +179,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
                                 fontSize: 18,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'Enter Name',
+                                hintText: languageService.translate('enter_name'),
                                 hintStyle: TextStyle(
                                   color: Colors.white.withOpacity(0.3),
                                   letterSpacing: 2,
@@ -291,6 +296,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
   }
 
   Future<void> _editPlayer(Player player) async {
+    final languageService = context.read<LanguageService>();
     final editController = TextEditingController(text: player.name);
     await showDialog(
       context: context,
@@ -307,9 +313,9 @@ class _PlayersScreenState extends State<PlayersScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'EDIT NAME',
-                  style: TextStyle(
+                Text(
+                  languageService.translate('edit_name'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -332,9 +338,9 @@ class _PlayersScreenState extends State<PlayersScreen> {
                       color: Colors.white,
                       fontFamily: 'serif',
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: 'ENTER NEW NAME',
+                      hintText: languageService.translate('enter_new_name'),
                     ),
                   ),
                 ),
@@ -345,7 +351,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'CANCEL',
+                          languageService.translate('cancel'),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.5),
                             letterSpacing: 2,
@@ -380,9 +386,9 @@ class _PlayersScreenState extends State<PlayersScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'SAVE',
-                          style: TextStyle(
+                        child: Text(
+                          languageService.translate('save'),
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 2,
                           ),

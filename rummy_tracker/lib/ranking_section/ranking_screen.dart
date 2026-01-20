@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
+import 'package:rummy_tracker/offline_db/language_service.dart';
 
 class RankingScreen extends StatefulWidget {
   const RankingScreen({super.key});
@@ -30,6 +32,7 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   Future<void> _showResetConfirmation() async {
+    final languageService = context.read<LanguageService>();
     final bool? confirm = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black87,
@@ -45,9 +48,9 @@ class _RankingScreenState extends State<RankingScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'RESET WINS?',
-                style: TextStyle(
+              Text(
+                languageService.translate('reset_wins'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
@@ -57,7 +60,7 @@ class _RankingScreenState extends State<RankingScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'This will clear all player win records. This action cannot be undone.',
+                languageService.translate('reset_wins_warning'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
@@ -71,7 +74,7 @@ class _RankingScreenState extends State<RankingScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(context, false),
                       child: Text(
-                        'CANCEL',
+                        languageService.translate('cancel'),
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.5),
                           letterSpacing: 2,
@@ -90,9 +93,9 @@ class _RankingScreenState extends State<RankingScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'RESET',
-                        style: TextStyle(
+                      child: Text(
+                        languageService.translate('reset'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2,
                         ),
@@ -119,6 +122,8 @@ class _RankingScreenState extends State<RankingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -167,11 +172,11 @@ class _RankingScreenState extends State<RankingScreen> {
                             padding: const EdgeInsets.all(12),
                           ),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'RANKING',
+                            languageService.translate('ranking'),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
@@ -203,7 +208,7 @@ class _RankingScreenState extends State<RankingScreen> {
                     child: _players.isEmpty
                         ? Center(
                             child: Text(
-                              'NO PLAYERS FOUND',
+                              languageService.translate('no_players_found'),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.15),
                                 letterSpacing: 2,
@@ -332,7 +337,7 @@ class _RankingScreenState extends State<RankingScreen> {
                                               ),
                                             ),
                                             Text(
-                                              'WINS',
+                                              languageService.translate('wins'),
                                               style: TextStyle(
                                                 color: rankColor.withOpacity(
                                                   0.5,

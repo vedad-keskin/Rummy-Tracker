@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rummy_tracker/layouts/main_layout.dart';
+import 'package:rummy_tracker/offline_db/language_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,18 +12,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Rummy Tracker',
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+    return ChangeNotifierProvider(
+      create: (_) => LanguageService(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Rummy Tracker',
+        theme: ThemeData(
+          useMaterial3: true,
           brightness: Brightness.dark,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.deepPurple,
+            brightness: Brightness.dark,
+          ),
         ),
+        home: const MainMenuScreen(),
       ),
-      home: const MainMenuScreen(),
     );
   }
 }

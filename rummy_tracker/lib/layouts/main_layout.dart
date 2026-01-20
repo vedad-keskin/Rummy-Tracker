@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
 import 'package:rummy_tracker/players_section/players_screen.dart';
 import 'package:rummy_tracker/ranking_section/ranking_screen.dart';
 import 'package:rummy_tracker/components/team_credits_dialog.dart';
+import 'package:rummy_tracker/components/language_switch.dart';
 import 'package:rummy_tracker/game_flow/phase_one_selection.dart';
 import 'package:rummy_tracker/game_flow/phase_two_tracking.dart';
 import 'package:rummy_tracker/offline_db/game_state_service.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
+import 'package:rummy_tracker/offline_db/language_service.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -45,6 +48,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -68,6 +73,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
           ),
+          // Language Switch - Top Right
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: const LanguageSwitch(),
+          ),
           // Content
           SafeArea(
             child: Center(
@@ -81,7 +92,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     Column(
                       children: [
                         Text(
-                          'RUMMY',
+                          languageService.translate('app_title_rummy'),
                           style: TextStyle(
                             fontSize: 56,
                             fontWeight: FontWeight.w900,
@@ -104,7 +115,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           ),
                         ),
                         Text(
-                          'TRACKER',
+                          languageService.translate('app_title_tracker'),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w300,
@@ -140,7 +151,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           MenuTile(
-                            title: 'PLAY NOW',
+                            title: languageService.translate('play_now'),
                             icon: Icons.play_arrow_rounded,
                             color: const Color.fromARGB(255, 255, 1, 1),
                             onTap: () async {
@@ -237,7 +248,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           ),
                           const SizedBox(height: 16),
                           MenuTile(
-                            title: 'PLAYERS',
+                            title: languageService.translate('players'),
                             icon: Icons.people_alt_rounded,
                             color: const Color(0xFFFFAB40),
                             onTap: () {
@@ -283,7 +294,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           ),
                           const SizedBox(height: 16),
                           MenuTile(
-                            title: 'RANKING',
+                            title: languageService.translate('ranking'),
                             icon: Icons.leaderboard_rounded,
                             color: const Color(0xFF30E8BF),
                             onTap: () {
@@ -354,7 +365,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 _easterEggTimer?.cancel();
               },
               child: Text(
-                'Rummy Tracker v1.4.0',
+                'Rummy Tracker v2.1.2',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.24),
                   fontSize: 12,

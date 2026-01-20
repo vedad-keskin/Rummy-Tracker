@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:rummy_tracker/offline_db/language_service.dart';
 
 class TeamCreditsDialog extends StatelessWidget {
   const TeamCreditsDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
+    
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Stack(
@@ -35,7 +39,7 @@ class TeamCreditsDialog extends StatelessWidget {
                 Column(
                   children: [
                     Text(
-                      'RUMMY',
+                      languageService.translate('app_title_rummy'),
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
@@ -51,7 +55,7 @@ class TeamCreditsDialog extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'TRACKER',
+                      languageService.translate('app_title_tracker'),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w300,
@@ -64,7 +68,7 @@ class TeamCreditsDialog extends StatelessWidget {
                 const SizedBox(height: 48),
                 // Credits content
                 _buildCreditItem(
-                  'PROJECT LEAD',
+                  languageService.translate('project_lead'),
                   'Vedad Keskin',
                   const Color(0xFFFFAB40),
                 ),
@@ -85,9 +89,9 @@ class TeamCreditsDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: const Text(
-                    'CLOSE',
-                    style: TextStyle(
+                  child: Text(
+                    languageService.translate('close'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
+import 'package:rummy_tracker/offline_db/language_service.dart';
 import 'package:rummy_tracker/game_flow/phase_two_tracking.dart';
 
 class PhaseOneScreen extends StatefulWidget {
@@ -136,6 +138,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
     final bool canStart = _selectedPlayerIds.length >= 2;
 
     return Scaffold(
@@ -186,13 +189,13 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                             padding: const EdgeInsets.all(12),
                           ),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             children: [
                               Text(
-                                'SELECT PLAYERS',
+                                languageService.translate('select_players'),
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
@@ -211,7 +214,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                   _AnimatedEntry(
                     delay: 100,
                     child: Text(
-                      '${_selectedPlayerIds.length} SELECTED (MIN. 2)',
+                      '${_selectedPlayerIds.length} ${languageService.translate('selected_min_2')}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: canStart
@@ -230,7 +233,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                     child: _allPlayers.isEmpty
                         ? Center(
                             child: Text(
-                              'NO PLAYERS FOUND',
+                              languageService.translate('no_players_found'),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.3),
                                 letterSpacing: 2,
@@ -345,7 +348,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                                     ),
                                                   ),
                                                   Text(
-                                                    'WINS',
+                                                    languageService.translate('wins'),
                                                     style: TextStyle(
                                                       color: isSelected
                                                           ? Colors.white54
@@ -471,7 +474,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        'START GAME',
+                        languageService.translate('start_game'),
                         style: TextStyle(
                           color: canStart ? Colors.black : Colors.white24,
                           fontSize: 18,

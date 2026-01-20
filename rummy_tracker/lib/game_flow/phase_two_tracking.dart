@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
+import 'package:rummy_tracker/offline_db/language_service.dart';
 import 'package:rummy_tracker/game_flow/phase_three_win.dart';
 import 'package:rummy_tracker/offline_db/game_state_service.dart';
 
@@ -353,12 +355,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   }
 
   void _showRemovePlayerDialog(Player player, int playerIndex) {
+    final languageService = context.read<LanguageService>();
+    
     // Don't allow removal if only 2 players remain
     if (_activePlayers.length <= 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Minimum 2 players required'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(languageService.translate('minimum_players_required')),
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
@@ -376,8 +380,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           ),
         ),
         title: Text(
-          'REMOVE PLAYER?',
-          style: TextStyle(
+          languageService.translate('remove_player'),
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w900,
@@ -386,7 +390,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           ),
         ),
         content: Text(
-          'Remove ${player.name.toUpperCase()} from the game? This action cannot be undone.',
+          '${languageService.translate('remove')} ${player.name.toUpperCase()} ${languageService.translate('remove_player_confirm')}',
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.8),
             fontSize: 14,
@@ -397,7 +401,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
-              'CANCEL',
+              languageService.translate('cancel'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.7),
                 fontWeight: FontWeight.bold,
@@ -414,9 +418,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'REMOVE',
-              style: TextStyle(
+            child: Text(
+              languageService.translate('remove'),
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1,
               ),
@@ -432,6 +436,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   }
 
   void _removePlayer(Player player, int playerIndex) {
+    final languageService = context.read<LanguageService>();
+    
     setState(() {
       // Remove from active players list
       _activePlayers.removeAt(playerIndex);
@@ -464,7 +470,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     // Show confirmation snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${player.name} removed'),
+        content: Text('${player.name} ${languageService.translate('player_removed')}'),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -484,6 +490,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   }
 
   Future<bool> _onWillPop() async {
+    final languageService = context.read<LanguageService>();
+    
     // Check if there are any rounds or a round in progress
     if (_rounds.isNotEmpty || _currentRound != null || _isInputExpanded) {
       final shouldPop = await showDialog<bool>(
@@ -498,8 +506,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
             ),
           ),
           title: Text(
-            'EXIT GAME?',
-            style: TextStyle(
+            languageService.translate('exit_game'),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -508,7 +516,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
             ),
           ),
           content: Text(
-            'You have rounds in progress. Are you sure you want to exit? All progress will be lost.',
+            languageService.translate('exit_game_warning'),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.8),
               fontSize: 14,
@@ -519,7 +527,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(
-                'CANCEL',
+                languageService.translate('cancel'),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontWeight: FontWeight.bold,
@@ -540,9 +548,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'EXIT',
-                style: TextStyle(
+              child: Text(
+                languageService.translate('exit'),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
                 ),
@@ -557,6 +565,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   }
 
   void _declareWinner() {
+    final languageService = context.read<LanguageService>();
+    
     showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -569,8 +579,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           ),
         ),
         title: Text(
-          'FINISH GAME?',
-          style: TextStyle(
+          languageService.translate('finish_game'),
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w900,
@@ -579,7 +589,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           ),
         ),
         content: Text(
-          'Are you sure you want to finish the game and declare the winner?',
+          languageService.translate('finish_game_confirm'),
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.8),
             fontSize: 14,
@@ -590,7 +600,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
-              'CANCEL',
+              languageService.translate('cancel'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.7),
                 fontWeight: FontWeight.bold,
@@ -609,9 +619,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'FINISH',
-              style: TextStyle(
+            child: Text(
+              languageService.translate('finish'),
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1,
               ),
@@ -802,14 +812,6 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // if (rank == 1) ...[
-                      //   const Icon(
-                      //     Icons.emoji_events_rounded,
-                      //     color: Color(0xFFFFD700),
-                      //     size: 12,
-                      //   ),
-                      //   const SizedBox(width: 4),
-                      // ],
                       Text(
                         rank == 1 ? '1ST' : rank == 2 ? '2ND' : rank == 3 ? '3RD' : '${rank}TH',
                         style: TextStyle(
@@ -896,6 +898,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
     final totals = _getTotals();
 
     return PopScope(
@@ -956,11 +959,11 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
                         ),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'POINTS TRACKER',
+                          languageService.translate('points_tracker'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -997,7 +1000,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                               width: nameWidth,
                               child: Column(
                                 children: [
-                                  _buildHeaderCell('PLAYERS', isLeft: true),
+                                  _buildHeaderCell(languageService.translate('players'), isLeft: true),
                                   const SizedBox(height: 16),
                                   Expanded(
                                     child: ListView.builder(
@@ -1091,7 +1094,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                         child: (_rounds.isEmpty && _currentRound == null)
                                             ? Center(
                                                 child: Text(
-                                                  'NO ROUNDS',
+                                                  languageService.translate('no_rounds'),
                                                   style: TextStyle(
                                                     color: Colors.white
                                                         .withValues(alpha: 0.1),
@@ -1249,8 +1252,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                               Expanded(
                                 child: Text(
                                   _activePlayers[_currentPlayerIndex].name.toUpperCase(),
-                                  style: TextStyle(
-                                    color: const Color(0xFF30E8BF),
+                                  style: const TextStyle(
+                                    color: Color(0xFF30E8BF),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1,
@@ -1295,7 +1298,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                               const SizedBox(width: 8),
                               Expanded(child: _buildPresetButton(-140, label: '-140')),
                               const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(-500, label: 'RUMMY', isSpecial: true)),
+                              Expanded(child: _buildPresetButton(-500, label: languageService.translate('rummy'), isSpecial: true)),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -1404,7 +1407,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        _isOnLastPlayer() ? 'COMPLETE' : 'ADD POINT',
+                                        _isOnLastPlayer() ? languageService.translate('complete') : languageService.translate('add_point'),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 2,
@@ -1424,7 +1427,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                 : SafeArea(
                     top: false,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
                       child: Row(
                         children: [
                           Expanded(
@@ -1440,14 +1443,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                 elevation: 8,
                                 shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_rounded, size: 24),
-                                  SizedBox(width: 3),
+                                  const Icon(Icons.add_rounded, size: 24),
+                                  const SizedBox(width: 3),
                                   Text(
-                                    'ADD ROUND',
-                                    style: TextStyle(
+                                    languageService.translate('add_round'),
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 2,
                                     ),
@@ -1471,14 +1474,14 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                   elevation: 8,
                                   shadowColor: const Color(0xFFFFD700).withValues(alpha: 0.5),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.emoji_events_rounded, size: 24),
-                                    SizedBox(width: 8),
+                                    const Icon(Icons.emoji_events_rounded, size: 24),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      'FINISH',
-                                      style: TextStyle(
+                                      languageService.translate('finish'),
+                                      style: const TextStyle(
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: 2,
                                       ),
