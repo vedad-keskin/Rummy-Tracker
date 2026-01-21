@@ -5,6 +5,8 @@ import 'package:rummy_tracker/players_section/players_screen.dart';
 import 'package:rummy_tracker/ranking_section/ranking_screen.dart';
 import 'package:rummy_tracker/components/team_credits_dialog.dart';
 import 'package:rummy_tracker/components/language_switch.dart';
+import 'package:rummy_tracker/components/how_to_play_button.dart';
+import 'package:rummy_tracker/components/rules_dialog.dart';
 import 'package:rummy_tracker/game_flow/phase_one_selection.dart';
 import 'package:rummy_tracker/game_flow/phase_two_tracking.dart';
 import 'package:rummy_tracker/offline_db/game_state_service.dart';
@@ -78,6 +80,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             top: MediaQuery.of(context).padding.top + 16,
             right: 16,
             child: const LanguageSwitch(),
+          ),
+          // How to Play Button - Top Left
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            child: HowToPlayButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const RulesDialog(),
+                );
+              },
+            ),
           ),
           // Content
           SafeArea(

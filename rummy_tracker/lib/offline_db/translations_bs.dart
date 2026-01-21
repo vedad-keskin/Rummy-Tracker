@@ -19,6 +19,8 @@ const Map<String, String> bsTranslations = {
   'enter_new_name': 'UNESI NOVO IME',
   'cancel': 'OTKAŽI',
   'save': 'SPASI',
+  'next': 'SLJEDEĆE',
+  'back': 'NAZAD',
   'player_already_exists': 'Igrač već postoji!',
   
   // Ranking Screen
@@ -55,4 +57,30 @@ const Map<String, String> bsTranslations = {
   
   // Common
   'rummy': 'REMI',
+  
+  // How to Play
+  'how_to_play': 'UPUTE',
+  'rules_title': 'KAKO SE IGRA',
+  'rules_content': 
+    '1. Početak\n\n'
+    'Dodajte igrače u sekciji Igrači. Potrebno je najmanje 2 igrača da biste započeli igru.\n\n'
+    '2. Započinjanje Igre\n\n'
+    'Dodirnite "IGRAJ" i odaberite najmanje 2 igrača. Dodirnite "ZAPOČNI IGRU" da počnete praćenje bodova.\n\n'
+    '3. Sistem Bodovanja\n\n'
+    'Bodovi se prate u rundama. Niži bodovi su bolji - igrač sa najnižim ukupnim bodovima pobjeđuje!\n\n'
+    'Vrijednosti Bodovanja:\n'
+    '- Obična Pobjeda: -40 bodova\n'
+    '- Hand: -140 bodova\n'
+    '- Remi: -500 bodova\n\n'
+    'Također možete dodati prilagođene pozitivne ili negativne bodove koristeći polje za unos.\n\n'
+    '4. Dodavanje Rundi\n\n'
+    'Dodirnite "DODAJ RUNDU" da počnete unositi bodove za novu rundu. Odaberite svakog igrača i unesite njihove bodove koristeći predefinisane dugmad ili prilagođeno polje za unos. Dodirnite "DODAJ BOD" da pređete na sljedećeg igrača, ili "ZAVRŠI" kada završite sa svim igračima.\n\n'
+    '5. Praćenje Napretka\n\n'
+    'Igrači se automatski sortiraju prema njihovom ukupnom bodovima (najniži prvi). Trenutna runda koja se unosi je istaknuta u teal boji. Završene runde se prikazuju kao kolone na desnoj strani.\n\n'
+    '6. Završavanje Igre\n\n'
+    'Kada ste spremni, dodirnite "ZAVRŠI" da proglasite pobjednika. Igrač sa najnižim ukupnim bodovima pobjeđuje! Broj pobjeda pobjednika se automatski računa u sekciji Rang Lista.\n\n'
+    '7. Uklanjanje Igrača\n\n'
+    'Možete ukloniti igrače tokom igre dodirivanjem X dugmeta pored njihovog imena. Najmanje 2 igrača moraju ostati u igri.\n\n'
+    '8. Stanje Igre\n\n'
+    'Vaš napredak u igri se automatski čuva. Ako izađete i vratite se, možete nastaviti odakle ste stali ponovnim dodirivanjem "IGRAJ".',
 };

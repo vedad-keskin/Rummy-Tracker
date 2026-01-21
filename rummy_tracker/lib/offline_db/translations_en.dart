@@ -19,6 +19,8 @@ const Map<String, String> enTranslations = {
   'enter_new_name': 'ENTER NEW NAME',
   'cancel': 'CANCEL',
   'save': 'SAVE',
+  'next': 'NEXT',
+  'back': 'BACK',
   'player_already_exists': 'Player already exists!',
   
   // Ranking Screen
@@ -55,4 +57,30 @@ const Map<String, String> enTranslations = {
   
   // Common
   'rummy': 'RUMMY',
+  
+  // How to Play
+  'how_to_play': 'HOW TO PLAY',
+  'rules_title': 'HOW TO PLAY',
+  'rules_content': 
+    '1. Getting Started\n\n'
+    'Add players in the Players section. You need at least 2 players to start a game.\n\n'
+    '2. Starting a Game\n\n'
+    'Tap "PLAY NOW" and select at least 2 players. Tap "START GAME" to begin tracking scores.\n\n'
+    '3. Scoring System\n\n'
+    'Points are tracked in rounds. Lower scores are better - the player with the lowest total score wins!\n\n'
+    'Scoring Values:\n'
+    '- Regular Win: -40 points\n'
+    '- Going Out (Hand): -140 points\n'
+    '- Rummy Win: -500 points\n\n'
+    'You can also add custom positive or negative scores using the input field.\n\n'
+    '4. Adding Rounds\n\n'
+    'Tap "ADD ROUND" to start entering scores for a new round. Select each player and enter their score using preset buttons or the custom input field. Tap "ADD POINT" to move to the next player, or "COMPLETE" when finished with all players.\n\n'
+    '5. Tracking Progress\n\n'
+    'Players are automatically sorted by their total score (lowest first). The current round being entered is highlighted in teal. Completed rounds appear as columns on the right.\n\n'
+    '6. Finishing the Game\n\n'
+    'When ready, tap "FINISH" to declare the winner. The player with the lowest total score wins! The winner\'s win count is automatically incremented in the Rankings section.\n\n'
+    '7. Removing Players\n\n'
+    'You can remove players during a game by tapping the X button next to their name. At least 2 players must remain in the game.\n\n'
+    '8. Game State\n\n'
+    'Your game progress is automatically saved. If you exit and return, you can resume from where you left off by tapping "PLAY NOW" again.',
 };
