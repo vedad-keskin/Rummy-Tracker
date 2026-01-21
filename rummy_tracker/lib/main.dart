@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rummy_tracker/layouts/main_layout.dart';
+import 'package:rummy_tracker/layouts/splash_screen.dart';
 import 'package:rummy_tracker/offline_db/language_service.dart';
 
 void main() {
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.dark,
           ),
         ),
-        home: const MainMenuScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
