@@ -51,7 +51,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   @override
   Widget build(BuildContext context) {
     final languageService = context.watch<LanguageService>();
-    
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -171,55 +171,69 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                             color: const Color.fromARGB(255, 255, 1, 1),
                             onTap: () async {
                               // Check if there's a game in progress
-                              final gameState = await _gameStateService.loadGameState();
-                              
-                              if (gameState != null && gameState.hasGameInProgress) {
+                              final gameState = await _gameStateService
+                                  .loadGameState();
+
+                              if (gameState != null &&
+                                  gameState.hasGameInProgress) {
                                 // Load players and restore game state
-                                final allPlayers = await _playerService.loadPlayers();
+                                final allPlayers = await _playerService
+                                    .loadPlayers();
                                 final selectedPlayers = allPlayers
-                                    .where((p) => gameState.selectedPlayerIds.contains(p.id))
+                                    .where(
+                                      (p) => gameState.selectedPlayerIds
+                                          .contains(p.id),
+                                    )
                                     .toList();
-                                
+
                                 if (selectedPlayers.length >= 2) {
                                   // Navigate directly to tracking screen with saved state
                                   Navigator.push(
                                     context,
                                     PageRouteBuilder(
-                                      pageBuilder: (context, animation, secondaryAnimation) =>
-                                          PhaseTwoTrackingScreen(
-                                        selectedPlayers: selectedPlayers,
-                                        savedState: gameState,
-                                      ),
-                                      transitionsBuilder: (
-                                        context,
-                                        animation,
-                                        secondaryAnimation,
-                                        child,
-                                      ) {
-                                        var curve = Curves.easeOutCubic;
-                                        var curvedAnimation = CurvedAnimation(
-                                          parent: animation,
-                                          curve: curve,
-                                        );
-
-                                        return FadeTransition(
-                                          opacity: curvedAnimation,
-                                          child: ScaleTransition(
-                                            scale: Tween<double>(
-                                              begin: 0.95,
-                                              end: 1.0,
-                                            ).animate(curvedAnimation),
-                                            child: child,
+                                      pageBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                          ) => PhaseTwoTrackingScreen(
+                                            selectedPlayers: selectedPlayers,
+                                            savedState: gameState,
                                           ),
-                                        );
-                                      },
-                                      transitionDuration: const Duration(milliseconds: 600),
+                                      transitionsBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                            child,
+                                          ) {
+                                            var curve = Curves.easeOutCubic;
+                                            var curvedAnimation =
+                                                CurvedAnimation(
+                                                  parent: animation,
+                                                  curve: curve,
+                                                );
+
+                                            return FadeTransition(
+                                              opacity: curvedAnimation,
+                                              child: ScaleTransition(
+                                                scale: Tween<double>(
+                                                  begin: 0.95,
+                                                  end: 1.0,
+                                                ).animate(curvedAnimation),
+                                                child: child,
+                                              ),
+                                            );
+                                          },
+                                      transitionDuration: const Duration(
+                                        milliseconds: 600,
+                                      ),
                                     ),
                                   );
                                   return;
                                 }
                               }
-                              
+
                               // No game in progress, go to player selection
                               Navigator.push(
                                 context,
@@ -380,7 +394,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 _easterEggTimer?.cancel();
               },
               child: Text(
-                'Rummy Tracker v2.2.2',
+                'Rummy Tracker v3.1.2',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.24),
                   fontSize: 12,

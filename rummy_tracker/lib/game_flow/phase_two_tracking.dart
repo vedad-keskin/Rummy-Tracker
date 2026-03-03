@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
@@ -19,7 +20,8 @@ class PhaseTwoTrackingScreen extends StatefulWidget {
   State<PhaseTwoTrackingScreen> createState() => _PhaseTwoTrackingScreenState();
 }
 
-class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with TickerProviderStateMixin {
+class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen>
+    with TickerProviderStateMixin {
   final List<Map<String, int>> _rounds = [];
   final ScrollController _verticalController = ScrollController();
   final ScrollController _horizontalController = ScrollController();
@@ -33,14 +35,16 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
   bool _isSyncingScroll = false;
   List<int> _sortedPlayerIndices = [];
   late List<Player> _activePlayers; // Mutable list of players still in the game
+  Timer? _longPressTimer;
+  final PlayerService _playerService = PlayerService();
 
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize mutable players list
     _activePlayers = List.from(widget.selectedPlayers);
-    
+
     // Load saved state if available
     if (widget.savedState != null) {
       final savedState = widget.savedState!;
@@ -48,7 +52,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       _currentRound = savedState.currentRound;
       _currentPlayerIndex = savedState.currentPlayerIndex;
       _isInputExpanded = savedState.isInputExpanded;
-      
+
       // Initialize controllers with saved scores or defaults
       for (var player in _activePlayers) {
         final savedScore = savedState.scoreControllers[player.id] ?? '0';
@@ -68,19 +72,19 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         });
       }
     }
-    
+
     // Initialize sorted indices (original order)
     _sortedPlayerIndices = List.generate(_activePlayers.length, (i) => i);
-    
+
     // If we have saved rounds, sort by current totals
     if (_rounds.isNotEmpty) {
       _sortPlayersByScore(animate: false);
     }
-    
+
     // Set up scroll synchronization
     _verticalController.addListener(_syncPlayersToRounds);
     _roundsVerticalController.addListener(_syncRoundsToPlayers);
-    
+
     // Save initial state
     _saveGameState();
   }
@@ -103,7 +107,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   void _updateCurrentRound() {
     if (!_isInputExpanded) return;
-    
+
     final Map<String, int> roundScores = {};
     bool hasAnyScore = false;
     final bool wasNull = _currentRound == null;
@@ -121,7 +125,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       setState(() {
         _currentRound = roundScores;
       });
-      
+
       // Scroll to right when first score is entered (round column appears)
       if (wasNull) {
         Future.delayed(const Duration(milliseconds: 100), () {
@@ -139,9 +143,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         _currentRound = null;
       });
     }
-    
+
     // Don't sort during point entry - order stays locked until round is complete
-    
+
     // Save state whenever round is updated
     _saveGameState();
   }
@@ -151,7 +155,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     for (var entry in _scoreControllers.entries) {
       scoreControllersMap[entry.key] = entry.value.text;
     }
-    
+
     final gameState = GameState(
       selectedPlayerIds: _activePlayers.map((p) => p.id).toList(),
       rounds: _rounds,
@@ -160,29 +164,31 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       isInputExpanded: _isInputExpanded,
       scoreControllers: scoreControllersMap,
     );
-    
+
     _gameStateService.saveGameState(gameState);
   }
 
   bool _isOnLastPlayer() {
     // Check if current player is at the last position in sorted order
-    final currentSortedPosition = _sortedPlayerIndices.indexOf(_currentPlayerIndex);
+    final currentSortedPosition = _sortedPlayerIndices.indexOf(
+      _currentPlayerIndex,
+    );
     return currentSortedPosition == _sortedPlayerIndices.length - 1;
   }
 
   String? _getWinningPlayerId(Map<String, int> totals) {
     if (totals.isEmpty || _rounds.isEmpty) return null;
-    
+
     String? winnerId;
     int lowestScore = 0;
-    
+
     totals.forEach((playerId, score) {
       if (winnerId == null || score < lowestScore) {
         lowestScore = score;
         winnerId = playerId;
       }
     });
-    
+
     return winnerId;
   }
 
@@ -213,7 +219,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   void _sortPlayersByScore({bool animate = true}) {
     final totals = _getTotals();
-    
+
     // Create list of indices sorted by score (lowest first = winning)
     final newOrder = List.generate(_activePlayers.length, (i) => i);
     newOrder.sort((a, b) {
@@ -221,7 +227,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       final scoreB = totals[_activePlayers[b].id] ?? 0;
       return scoreA.compareTo(scoreB);
     });
-    
+
     if (animate) {
       // Animate the reordering with a slight delay
       Future.delayed(const Duration(milliseconds: 300), () {
@@ -254,8 +260,10 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   void _addPoint() {
     // Find current player's position in the sorted list
-    final currentSortedPosition = _sortedPlayerIndices.indexOf(_currentPlayerIndex);
-    
+    final currentSortedPosition = _sortedPlayerIndices.indexOf(
+      _currentPlayerIndex,
+    );
+
     // Move to next player in sorted order if available
     if (currentSortedPosition < _sortedPlayerIndices.length - 1) {
       final nextSortedPosition = currentSortedPosition + 1;
@@ -264,12 +272,12 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         _currentPlayerIndex = _sortedPlayerIndices[nextSortedPosition];
       });
       _saveGameState();
-      
+
       // Scroll to show the new current player at top
       const double rowHeight = 72.0;
       const double rowMargin = 8.0;
       final double scrollTarget = nextSortedPosition * (rowHeight + rowMargin);
-      
+
       Future.delayed(const Duration(milliseconds: 50), () {
         if (_verticalController.hasClients) {
           _verticalController.animateTo(
@@ -280,7 +288,10 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         }
         if (_roundsVerticalController.hasClients) {
           _roundsVerticalController.animateTo(
-            scrollTarget.clamp(0, _roundsVerticalController.position.maxScrollExtent),
+            scrollTarget.clamp(
+              0,
+              _roundsVerticalController.position.maxScrollExtent,
+            ),
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
           );
@@ -306,13 +317,13 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       _isInputExpanded = false;
       _currentRound = null;
     });
-    
+
     // Save state after round is finished
     _saveGameState();
-    
+
     // Sort players by score with animation
     _sortPlayersByScore(animate: true);
-    
+
     // Scroll to top to see the reordering
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_verticalController.hasClients) {
@@ -338,10 +349,12 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     setState(() {
       _isInputExpanded = true;
       // Start with the first player in sorted order
-      _currentPlayerIndex = _sortedPlayerIndices.isNotEmpty ? _sortedPlayerIndices[0] : 0;
+      _currentPlayerIndex = _sortedPlayerIndices.isNotEmpty
+          ? _sortedPlayerIndices[0]
+          : 0;
     });
     _saveGameState();
-    
+
     // Scroll horizontally to the right to show the new round column
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_horizontalController.hasClients) {
@@ -356,7 +369,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   void _showRemovePlayerDialog(Player player, int playerIndex) {
     final languageService = context.read<LanguageService>();
-    
+
     // Don't allow removal if only 2 players remain
     if (_activePlayers.length <= 2) {
       final messenger = ScaffoldMessenger.of(context);
@@ -365,11 +378,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         SnackBar(
           content: Row(
             children: [
-              const Icon(
-                Icons.warning_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
+              const Icon(Icons.warning_rounded, color: Colors.white, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -405,9 +414,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         backgroundColor: const Color(0xFF1B263B),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
-          ),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         title: Text(
           languageService.translate('remove_player'),
@@ -467,18 +474,18 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   void _removePlayer(Player player, int playerIndex) {
     final languageService = context.read<LanguageService>();
-    
+
     setState(() {
       // Remove from active players list
       _activePlayers.removeAt(playerIndex);
-      
+
       // Dispose and remove the score controller
       _scoreControllers[player.id]?.dispose();
       _scoreControllers.remove(player.id);
-      
+
       // Remove from current round if exists
       _currentRound?.remove(player.id);
-      
+
       // Adjust current player index if needed
       if (_currentPlayerIndex >= _activePlayers.length) {
         _currentPlayerIndex = _activePlayers.length - 1;
@@ -486,17 +493,17 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       if (_currentPlayerIndex < 0) {
         _currentPlayerIndex = 0;
       }
-      
+
       // Rebuild sorted indices
       _sortedPlayerIndices = List.generate(_activePlayers.length, (i) => i);
     });
-    
+
     // Re-sort players
     _sortPlayersByScore(animate: false);
-    
+
     // Save updated game state
     _saveGameState();
-    
+
     // Show confirmation snackbar
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
@@ -526,13 +533,747 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         ),
         backgroundColor: Colors.red.shade700,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         margin: const EdgeInsets.all(16),
         elevation: 10,
         duration: const Duration(seconds: 2),
       ),
+    );
+  }
+
+  void _addPlayerToSession(Player player) {
+    setState(() {
+      _activePlayers.add(player);
+
+      // Create score controller for new player
+      final controller = TextEditingController(text: '0');
+      _scoreControllers[player.id] = controller;
+      controller.addListener(() {
+        _updateCurrentRound();
+      });
+
+      // Backfill 0 scores for all existing rounds
+      for (var round in _rounds) {
+        round[player.id] = 0;
+      }
+
+      // Add to current round if one is in progress
+      if (_currentRound != null) {
+        _currentRound![player.id] = 0;
+      }
+
+      // Rebuild sorted indices
+      _sortedPlayerIndices = List.generate(_activePlayers.length, (i) => i);
+    });
+
+    // Re-sort players
+    _sortPlayersByScore(animate: false);
+
+    // Save updated game state
+    _saveGameState();
+
+    // Show confirmation snackbar
+    final languageService = context.read<LanguageService>();
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.person_add_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '${player.name} ${languageService.translate('player_added')}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'serif',
+                  fontWeight: FontWeight.w100,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF30E8BF).withValues(alpha: 0.8),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        margin: const EdgeInsets.all(16),
+        elevation: 10,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showAddPlayerDialog() async {
+    final languageService = context.read<LanguageService>();
+    final allPlayers = await _playerService.loadPlayers();
+    final activeIds = _activePlayers.map((p) => p.id).toSet();
+    final availablePlayers = allPlayers
+        .where((p) => !activeIds.contains(p.id))
+        .toList();
+    final newPlayerController = TextEditingController();
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 500),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B263B),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Title
+                    Text(
+                      languageService.translate('add_player'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                        fontFamily: 'serif',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Existing Players Section
+                    if (availablePlayers.isNotEmpty) ...[
+                      Text(
+                        languageService.translate('select_existing_player'),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                          fontFamily: 'serif',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Flexible(
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: availablePlayers.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final player = availablePlayers[index];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                _addPlayerToSession(player);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF30E8BF,
+                                        ).withValues(alpha: 0.15),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: const Color(
+                                            0xFF30E8BF,
+                                          ).withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.person_rounded,
+                                          color: Color(0xFF30E8BF),
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        player.name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'serif',
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${player.wins} ${languageService.translate('wins')}',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        fontSize: 12,
+                                        fontFamily: 'serif',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.add_circle_outline_rounded,
+                                      color: const Color(
+                                        0xFF30E8BF,
+                                      ).withValues(alpha: 0.7),
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // OR Divider
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              languageService.translate('or_divider'),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ] else ...[
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          languageService.translate('no_available_players'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            fontSize: 13,
+                            fontFamily: 'serif',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // New Player Section
+                    Text(
+                      languageService.translate('create_new'),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                        fontFamily: 'serif',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: newPlayerController,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'serif',
+                                fontSize: 16,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: languageService.translate(
+                                  'enter_name',
+                                ),
+                                hintStyle: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  letterSpacing: 1,
+                                ),
+                                border: InputBorder.none,
+                              ),
+                              onSubmitted: (_) async {
+                                final name = newPlayerController.text.trim();
+                                if (name.isEmpty) return;
+
+                                // Check for duplicates across all players
+                                final currentAll = await _playerService
+                                    .loadPlayers();
+                                final isDuplicate = currentAll.any(
+                                  (p) =>
+                                      p.name.toLowerCase() ==
+                                      name.toLowerCase(),
+                                );
+
+                                if (isDuplicate) {
+                                  // Player exists globally - find and add them
+                                  final existing = currentAll.firstWhere(
+                                    (p) =>
+                                        p.name.toLowerCase() ==
+                                        name.toLowerCase(),
+                                  );
+                                  if (activeIds.contains(existing.id)) return;
+                                  Navigator.of(dialogContext).pop();
+                                  _addPlayerToSession(existing);
+                                } else {
+                                  // Create new player
+                                  final updated = await _playerService
+                                      .addPlayer(currentAll, name);
+                                  final newPlayer = updated.last;
+                                  Navigator.of(dialogContext).pop();
+                                  _addPlayerToSession(newPlayer);
+                                }
+                              },
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              final name = newPlayerController.text.trim();
+                              if (name.isEmpty) return;
+
+                              final currentAll = await _playerService
+                                  .loadPlayers();
+                              final isDuplicate = currentAll.any(
+                                (p) =>
+                                    p.name.toLowerCase() == name.toLowerCase(),
+                              );
+
+                              if (isDuplicate) {
+                                final existing = currentAll.firstWhere(
+                                  (p) =>
+                                      p.name.toLowerCase() ==
+                                      name.toLowerCase(),
+                                );
+                                if (activeIds.contains(existing.id)) return;
+                                Navigator.of(dialogContext).pop();
+                                _addPlayerToSession(existing);
+                              } else {
+                                final updated = await _playerService.addPlayer(
+                                  currentAll,
+                                  name,
+                                );
+                                final newPlayer = updated.last;
+                                Navigator.of(dialogContext).pop();
+                                _addPlayerToSession(newPlayer);
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.add_rounded,
+                              color: Color(0xFF30E8BF),
+                            ),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(
+                                0xFF30E8BF,
+                              ).withValues(alpha: 0.15),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                    // Cancel button
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: Text(
+                        languageService.translate('cancel'),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditScoreDialog(int roundIndex, int playerIndex) {
+    final languageService = context.read<LanguageService>();
+    final player = _activePlayers[playerIndex];
+    final currentScore = _rounds[roundIndex][player.id] ?? 0;
+    final editController = TextEditingController(text: currentScore.toString());
+    int? highlightedEditPreset;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Widget buildEditPresetButton(
+              int value, {
+              String? label,
+              bool isSpecial = false,
+            }) {
+              final displayLabel = label ?? (value >= 0 ? '+$value' : '$value');
+              final isHighlighted = highlightedEditPreset == value;
+              return GestureDetector(
+                onTap: () {
+                  setDialogState(() {
+                    editController.text = value.toString();
+                    highlightedEditPreset = value;
+                  });
+                  Future.delayed(const Duration(milliseconds: 200), () {
+                    if (dialogContext.mounted) {
+                      setDialogState(() {
+                        highlightedEditPreset = null;
+                      });
+                    }
+                  });
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isHighlighted
+                        ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
+                        : (isSpecial
+                              ? const Color(0xFF30E8BF).withValues(alpha: 0.15)
+                              : Colors.white.withValues(alpha: 0.05)),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isHighlighted
+                          ? const Color(0xFF30E8BF)
+                          : (isSpecial
+                                ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
+                                : Colors.white.withValues(alpha: 0.1)),
+                      width: isHighlighted ? 2 : 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      displayLabel,
+                      style: TextStyle(
+                        color: isHighlighted || isSpecial
+                            ? const Color(0xFF30E8BF)
+                            : Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B263B),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header
+                    Text(
+                      languageService.translate('edit_score'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                        fontFamily: 'serif',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${player.name.toUpperCase()} — R${roundIndex + 1}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF30E8BF),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                        fontFamily: 'serif',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Preset Buttons Row 1
+                    Row(
+                      children: [
+                        Expanded(child: buildEditPresetButton(0)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(-40, label: '-40'),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(-140, label: '-140'),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(
+                            -500,
+                            label: languageService.translate('rummy'),
+                            isSpecial: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Row 2
+                    Row(
+                      children: [
+                        Expanded(child: buildEditPresetButton(5, label: '+5')),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(10, label: '+10'),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(15, label: '+15'),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(20, label: '+20'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Row 3
+                    Row(
+                      children: [
+                        Expanded(
+                          child: buildEditPresetButton(30, label: '+30'),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(50, label: '+50'),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(100, label: '+100'),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildEditPresetButton(200, label: '+200'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Score Input Field
+                    Container(
+                      height: 56,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: TextField(
+                          controller: editController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            signed: true,
+                          ),
+                          textAlign: TextAlign.center,
+                          autofocus: true,
+                          style: const TextStyle(
+                            color: Color(0xFF30E8BF),
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'monospace',
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                          ),
+                          onTap: () {
+                            editController.selection = TextSelection(
+                              baseOffset: 0,
+                              extentOffset: editController.text.length,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            child: Text(
+                              languageService.translate('cancel'),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final newScore =
+                                  int.tryParse(editController.text) ?? 0;
+                              Navigator.of(dialogContext).pop();
+
+                              setState(() {
+                                _rounds[roundIndex][player.id] = newScore;
+                              });
+
+                              _sortPlayersByScore(animate: true);
+                              _saveGameState();
+
+                              final messenger = ScaffoldMessenger.of(
+                                this.context,
+                              );
+                              messenger.hideCurrentSnackBar();
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          languageService.translate(
+                                            'score_updated',
+                                          ),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: 'serif',
+                                            fontWeight: FontWeight.w100,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  backgroundColor: const Color(
+                                    0xFF30E8BF,
+                                  ).withValues(alpha: 0.8),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  margin: const EdgeInsets.all(16),
+                                  elevation: 10,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF30E8BF),
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(
+                              languageService.translate('save'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -542,7 +1283,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       for (var player in _activePlayers) {
         _scoreControllers[player.id]!.text = '0';
       }
-      _currentPlayerIndex = _sortedPlayerIndices.isNotEmpty ? _sortedPlayerIndices[0] : 0;
+      _currentPlayerIndex = _sortedPlayerIndices.isNotEmpty
+          ? _sortedPlayerIndices[0]
+          : 0;
       _isInputExpanded = false;
       _currentRound = null;
     });
@@ -551,7 +1294,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   Future<bool> _onWillPop() async {
     final languageService = context.read<LanguageService>();
-    
+
     // Check if there are any rounds or a round in progress
     if (_rounds.isNotEmpty || _currentRound != null || _isInputExpanded) {
       final shouldPop = await showDialog<bool>(
@@ -561,9 +1304,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           backgroundColor: const Color(0xFF1B263B),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: Colors.white.withValues(alpha: 0.1),
-            ),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
           ),
           title: Text(
             languageService.translate('exit_game'),
@@ -626,7 +1367,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   void _declareWinner() {
     final languageService = context.read<LanguageService>();
-    
+
     showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -634,9 +1375,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         backgroundColor: const Color(0xFF1B263B),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
-          ),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         title: Text(
           languageService.translate('finish_game'),
@@ -705,21 +1444,21 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         if (winnerId != null) {
           // Clear game state when game is finished
           _gameStateService.clearGameState();
-          
+
           final winner = _activePlayers.firstWhere((p) => p.id == winnerId);
           // Create rankings list with all players and their scores
-          final rankings = _activePlayers.map((player) {
-            return MapEntry(player, totals[player.id] ?? 0);
-          }).toList()
-            ..sort((a, b) => a.value.compareTo(b.value)); // Sort by score (lowest first)
-          
+          final rankings =
+              _activePlayers.map((player) {
+                return MapEntry(player, totals[player.id] ?? 0);
+              }).toList()..sort(
+                (a, b) => a.value.compareTo(b.value),
+              ); // Sort by score (lowest first)
+
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PhaseThreeWinScreen(
-                winner: winner,
-                rankings: rankings,
-              ),
+              builder: (context) =>
+                  PhaseThreeWinScreen(winner: winner, rankings: rankings),
             ),
           );
         }
@@ -729,6 +1468,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
 
   @override
   void dispose() {
+    _longPressTimer?.cancel();
     _verticalController.removeListener(_syncPlayersToRounds);
     _roundsVerticalController.removeListener(_syncRoundsToPlayers);
     _verticalController.dispose();
@@ -770,19 +1510,31 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     );
   }
 
-  Widget _buildPlayerRowCell(Player player, int total, {double height = 72.0, bool isHighlighted = false, bool isWinner = false, int? rank, VoidCallback? onRemove}) {
+  Widget _buildPlayerRowCell(
+    Player player,
+    int total, {
+    double height = 72.0,
+    bool isHighlighted = false,
+    bool isWinner = false,
+    int? rank,
+    VoidCallback? onRemove,
+  }) {
     final isNegative = total < 0;
-    
+
     // Rank colors: gold, silver, bronze for top 3
     Color? getRankColor(int r) {
       switch (r) {
-        case 1: return const Color(0xFFFFD700); // Gold
-        case 2: return const Color(0xFFC0C0C0); // Silver
-        case 3: return const Color(0xFFCD7F32); // Bronze
-        default: return Colors.white.withValues(alpha: 0.5);
+        case 1:
+          return const Color(0xFFFFD700); // Gold
+        case 2:
+          return const Color(0xFFC0C0C0); // Silver
+        case 3:
+          return const Color(0xFFCD7F32); // Bronze
+        default:
+          return Colors.white.withValues(alpha: 0.5);
       }
     }
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
@@ -792,15 +1544,15 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
         color: isWinner
             ? const Color(0xFFFFD700).withValues(alpha: 0.2)
             : (isHighlighted
-                ? const Color(0xFF30E8BF).withValues(alpha: 0.2)
-                : Colors.white.withValues(alpha: 0.03)),
+                  ? const Color(0xFF30E8BF).withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.03)),
         borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
         border: Border.all(
           color: isWinner
               ? const Color(0xFFFFD700).withValues(alpha: 0.8)
               : (isHighlighted
-                  ? const Color(0xFF30E8BF).withValues(alpha: 0.6)
-                  : Colors.white.withValues(alpha: 0.05)),
+                    ? const Color(0xFF30E8BF).withValues(alpha: 0.6)
+                    : Colors.white.withValues(alpha: 0.05)),
           width: (isWinner || isHighlighted) ? 2 : 1,
         ),
       ),
@@ -860,7 +1612,10 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
               if (rank != null)
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: getRankColor(rank)!.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
@@ -873,7 +1628,13 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        rank == 1 ? '1ST' : rank == 2 ? '2ND' : rank == 3 ? '3RD' : '${rank}TH',
+                        rank == 1
+                            ? '1ST'
+                            : rank == 2
+                            ? '2ND'
+                            : rank == 3
+                            ? '3RD'
+                            : '${rank}TH',
                         style: TextStyle(
                           color: getRankColor(rank),
                           fontSize: 9,
@@ -893,9 +1654,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                 decoration: BoxDecoration(
                   color: isWinner
                       ? const Color(0xFFFFD700).withValues(alpha: 0.3)
-                      : (isNegative 
-                          ? const Color(0xFF30E8BF).withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.1)),
+                      : (isNegative
+                            ? const Color(0xFF30E8BF).withValues(alpha: 0.2)
+                            : Colors.white.withValues(alpha: 0.1)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -917,7 +1678,11 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
     );
   }
 
-  Widget _buildPresetButton(int value, {String? label, bool isSpecial = false}) {
+  Widget _buildPresetButton(
+    int value, {
+    String? label,
+    bool isSpecial = false,
+  }) {
     final displayLabel = label ?? (value >= 0 ? '+$value' : '$value');
     final isHighlighted = _highlightedPreset == value;
     return GestureDetector(
@@ -929,15 +1694,15 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           color: isHighlighted
               ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
               : (isSpecial
-                  ? const Color(0xFF30E8BF).withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.05)),
+                    ? const Color(0xFF30E8BF).withValues(alpha: 0.15)
+                    : Colors.white.withValues(alpha: 0.05)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isHighlighted
                 ? const Color(0xFF30E8BF)
                 : (isSpecial
-                    ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
-                    : Colors.white.withValues(alpha: 0.1)),
+                      ? const Color(0xFF30E8BF).withValues(alpha: 0.3)
+                      : Colors.white.withValues(alpha: 0.1)),
             width: isHighlighted ? 2 : 1,
           ),
         ),
@@ -945,7 +1710,9 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
           child: Text(
             displayLabel,
             style: TextStyle(
-              color: isHighlighted || isSpecial ? const Color(0xFF30E8BF) : Colors.white,
+              color: isHighlighted || isSpecial
+                  ? const Color(0xFF30E8BF)
+                  : Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 14,
               fontFamily: 'monospace',
@@ -975,572 +1742,730 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
       child: Scaffold(
         extendBodyBehindAppBar: true,
         body: Stack(
-        children: [
-          // Background
-          Positioned.fill(
-            child: Image.asset('assets/images/bg.jpg', fit: BoxFit.cover),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.6),
-                    Colors.black.withValues(alpha: 0.9),
-                  ],
-                ),
-              ),
+          children: [
+            // Background
+            Positioned.fill(
+              child: Image.asset('assets/images/bg.jpg', fit: BoxFit.cover),
             ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () async {
-                          final shouldPop = await _onWillPop();
-                          if (shouldPop && context.mounted) {
-                            // Clear game state when explicitly exiting
-                            _gameStateService.clearGameState();
-                            Navigator.pop(context);
-                          }
-                        },
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: Colors.white,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          languageService.translate('points_tracker'),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 2,
-                            fontFamily: 'serif',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 48),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.6),
+                      Colors.black.withValues(alpha: 0.9),
                     ],
                   ),
                 ),
-
-                // Master Grid (Inverted: Players as Rows, Rounds as Columns)
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      const double nameWidth = 140.0;
-                      const double roundWidth = 70.0;
-                      const double headerHeight = 60.0;
-                      const double rowHeight = 72.0;
-                      final double sidePadding = 12.0;
-
-                      final int playerCount = _activePlayers.length;
-                      final int roundCount = _rounds.length + (_currentRound != null ? 1 : 0);
-                      final double scrollableWidth = roundCount * roundWidth;
-
-                      return Padding(
-                        padding: EdgeInsets.symmetric(horizontal: sidePadding),
-                        child: Row(
-                          children: [
-                            // 1. Fixed Left: Player Names with Totals
-                            SizedBox(
-                              width: nameWidth,
-                              child: Column(
-                                children: [
-                                  _buildHeaderCell(languageService.translate('players'), isLeft: true),
-                                  const SizedBox(height: 16),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      controller: _verticalController,
-                                      itemCount: playerCount,
-                                      padding: const EdgeInsets.only(bottom: 400),
-                                      itemBuilder: (context, i) {
-                                        // Always use sorted order (players stay sorted by points)
-                                        final playerIndex = _sortedPlayerIndices[i];
-                                        final player = _activePlayers[playerIndex];
-                                        final total = totals[player.id] ?? 0;
-                                        final isHighlighted = _isInputExpanded && playerIndex == _currentPlayerIndex;
-                                        final winningPlayerId = _getWinningPlayerId(totals);
-                                        final isWinner = !_isInputExpanded && 
-                                                         _rounds.isNotEmpty && 
-                                                         winningPlayerId == player.id;
-                                        // Show rank when rounds exist or current round has scores
-                                        final hasScores = _rounds.isNotEmpty || _currentRound != null;
-                                        final rank = hasScores ? i + 1 : null;
-                                        return GestureDetector(
-                                          onTap: () {
-                                            if (_isInputExpanded) {
-                                              setState(() {
-                                                _currentPlayerIndex = playerIndex;
-                                              });
-                                              _saveGameState();
-                                            }
-                                          },
-                                          child: AnimatedContainer(
-                                            duration: const Duration(milliseconds: 400),
-                                            curve: Curves.easeOutCubic,
-                                            child: _buildPlayerRowCell(
-                                              player,
-                                              total,
-                                              height: rowHeight,
-                                              isHighlighted: isHighlighted,
-                                              isWinner: isWinner,
-                                              rank: rank,
-                                              onRemove: () => _showRemovePlayerDialog(player, playerIndex),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () async {
+                            final shouldPop = await _onWillPop();
+                            if (shouldPop && context.mounted) {
+                              // Clear game state when explicitly exiting
+                              _gameStateService.clearGameState();
+                              Navigator.pop(context);
+                            }
+                          },
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.1,
                             ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            languageService.translate('points_tracker'),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
+                              fontFamily: 'serif',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 48),
+                      ],
+                    ),
+                  ),
 
-                            // 2. Scrollable Middle: Round Scores (horizontal scroll only)
-                            Expanded(
-                              child: SingleChildScrollView(
-                                controller: _horizontalController,
-                                scrollDirection: Axis.horizontal,
-                                child: SizedBox(
-                                  width: scrollableWidth.clamp(
-                                    constraints.maxWidth - nameWidth - (sidePadding * 2),
-                                    2000,
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      // Rounds Header Row
-                                      SizedBox(
-                                        height: headerHeight,
-                                        child: Row(
-                                          children: List.generate(roundCount, (
-                                            index,
-                                          ) {
-                                            final isCurrentRound = index == _rounds.length && _currentRound != null;
-                                            return SizedBox(
-                                              width: roundWidth,
-                                              child: Center(
-                                                child: Text(
-                                                  'R${index + 1}',
-                                                  style: TextStyle(
-                                                    color: isCurrentRound
-                                                        ? const Color(0xFF30E8BF)
-                                                        : Colors.white.withValues(alpha: 0.3),
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          }),
+                  // Master Grid (Inverted: Players as Rows, Rounds as Columns)
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        const double nameWidth = 140.0;
+                        const double roundWidth = 70.0;
+                        const double headerHeight = 60.0;
+                        const double rowHeight = 72.0;
+                        final double sidePadding = 12.0;
+
+                        final int playerCount = _activePlayers.length;
+                        final int roundCount =
+                            _rounds.length + (_currentRound != null ? 1 : 0);
+                        final double scrollableWidth = roundCount * roundWidth;
+
+                        return Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: sidePadding,
+                          ),
+                          child: Row(
+                            children: [
+                              // 1. Fixed Left: Player Names with Totals
+                              SizedBox(
+                                width: nameWidth,
+                                child: Column(
+                                  children: [
+                                    _buildHeaderCell(
+                                      languageService.translate('players'),
+                                      isLeft: true,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Expanded(
+                                      child: ListView.builder(
+                                        controller: _verticalController,
+                                        itemCount: playerCount,
+                                        padding: const EdgeInsets.only(
+                                          bottom: 400,
                                         ),
+                                        itemBuilder: (context, i) {
+                                          // Always use sorted order (players stay sorted by points)
+                                          final playerIndex =
+                                              _sortedPlayerIndices[i];
+                                          final player =
+                                              _activePlayers[playerIndex];
+                                          final total = totals[player.id] ?? 0;
+                                          final isHighlighted =
+                                              _isInputExpanded &&
+                                              playerIndex ==
+                                                  _currentPlayerIndex;
+                                          final winningPlayerId =
+                                              _getWinningPlayerId(totals);
+                                          final isWinner =
+                                              !_isInputExpanded &&
+                                              _rounds.isNotEmpty &&
+                                              winningPlayerId == player.id;
+                                          // Show rank when rounds exist or current round has scores
+                                          final hasScores =
+                                              _rounds.isNotEmpty ||
+                                              _currentRound != null;
+                                          final rank = hasScores ? i + 1 : null;
+                                          return GestureDetector(
+                                            onTap: () {
+                                              if (_isInputExpanded) {
+                                                setState(() {
+                                                  _currentPlayerIndex =
+                                                      playerIndex;
+                                                });
+                                                _saveGameState();
+                                              }
+                                            },
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 400,
+                                              ),
+                                              curve: Curves.easeOutCubic,
+                                              child: _buildPlayerRowCell(
+                                                player,
+                                                total,
+                                                height: rowHeight,
+                                                isHighlighted: isHighlighted,
+                                                isWinner: isWinner,
+                                                rank: rank,
+                                                onRemove: () =>
+                                                    _showRemovePlayerDialog(
+                                                      player,
+                                                      playerIndex,
+                                                    ),
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       ),
-                                      const SizedBox(height: 16),
-                                      // Scores Body
-                                      Expanded(
-                                        child: (_rounds.isEmpty && _currentRound == null)
-                                            ? Center(
-                                                child: Text(
-                                                  languageService.translate('no_rounds'),
-                                                  style: TextStyle(
-                                                    color: Colors.white
-                                                        .withValues(alpha: 0.1),
-                                                    letterSpacing: 2,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              )
-                                            : ListView.builder(
-                                                controller: _roundsVerticalController,
-                                                itemCount: playerCount,
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 400,
-                                                ),
-                                                itemBuilder: (context, pIndex) {
-                                                  // Always use sorted order (players stay sorted by points)
-                                                  final playerIndex = _sortedPlayerIndices[pIndex];
-                                                  return AnimatedContainer(
-                                                    duration: const Duration(milliseconds: 400),
-                                                    curve: Curves.easeOutCubic,
-                                                    height: rowHeight,
-                                                    margin:
-                                                        const EdgeInsets.only(
-                                                          bottom: 8,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white
-                                                          .withValues(
-                                                            alpha: 0.03,
-                                                          ),
-                                                      border: Border(
-                                                        top: BorderSide(
-                                                          color: Colors.white
-                                                              .withValues(
-                                                                alpha: 0.05,
-                                                              ),
-                                                        ),
-                                                        bottom: BorderSide(
-                                                          color: Colors.white
-                                                              .withValues(
-                                                                alpha: 0.05,
-                                                              ),
-                                                        ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // 2. Scrollable Middle: Round Scores (horizontal scroll only)
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  controller: _horizontalController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: scrollableWidth.clamp(
+                                      constraints.maxWidth -
+                                          nameWidth -
+                                          (sidePadding * 2),
+                                      2000,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        // Rounds Header Row
+                                        SizedBox(
+                                          height: headerHeight,
+                                          child: Row(
+                                            children: List.generate(
+                                              roundCount,
+                                              (index) {
+                                                final isCurrentRound =
+                                                    index == _rounds.length &&
+                                                    _currentRound != null;
+                                                return SizedBox(
+                                                  width: roundWidth,
+                                                  child: Center(
+                                                    child: Text(
+                                                      'R${index + 1}',
+                                                      style: TextStyle(
+                                                        color: isCurrentRound
+                                                            ? const Color(
+                                                                0xFF30E8BF,
+                                                              )
+                                                            : Colors.white
+                                                                  .withValues(
+                                                                    alpha: 0.3,
+                                                                  ),
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w900,
                                                       ),
                                                     ),
-                                                    child: Row(
-                                                      children: List.generate(roundCount, (
-                                                        rIndex,
-                                                      ) {
-                                                        final player = _activePlayers[playerIndex];
-                                                        final score = rIndex < _rounds.length
-                                                            ? (_rounds[rIndex][player.id] ?? 0)
-                                                            : (_currentRound?[player.id] ?? 0);
-                                                        final isCurrentRound = rIndex == _rounds.length && _currentRound != null;
-                                                        return SizedBox(
-                                                          width: roundWidth,
-                                                          child: Container(
-                                                            decoration: isCurrentRound
-                                                                ? BoxDecoration(
-                                                                    color: const Color(0xFF30E8BF).withValues(alpha: 0.1),
-                                                                    border: Border.all(
-                                                                      color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
-                                                                      width: 1,
-                                                                    ),
-                                                                  )
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        // Scores Body
+                                        Expanded(
+                                          child:
+                                              (_rounds.isEmpty &&
+                                                  _currentRound == null)
+                                              ? Center(
+                                                  child: Text(
+                                                    languageService.translate(
+                                                      'no_rounds',
+                                                    ),
+                                                    style: TextStyle(
+                                                      color: Colors.white
+                                                          .withValues(
+                                                            alpha: 0.1,
+                                                          ),
+                                                      letterSpacing: 2,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                )
+                                              : ListView.builder(
+                                                  controller:
+                                                      _roundsVerticalController,
+                                                  itemCount: playerCount,
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        bottom: 400,
+                                                      ),
+                                                  itemBuilder: (context, pIndex) {
+                                                    // Always use sorted order (players stay sorted by points)
+                                                    final playerIndex =
+                                                        _sortedPlayerIndices[pIndex];
+                                                    return AnimatedContainer(
+                                                      duration: const Duration(
+                                                        milliseconds: 400,
+                                                      ),
+                                                      curve:
+                                                          Curves.easeOutCubic,
+                                                      height: rowHeight,
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                            bottom: 8,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white
+                                                            .withValues(
+                                                              alpha: 0.03,
+                                                            ),
+                                                        border: Border(
+                                                          top: BorderSide(
+                                                            color: Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.05,
+                                                                ),
+                                                          ),
+                                                          bottom: BorderSide(
+                                                            color: Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.05,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      child: Row(
+                                                        children: List.generate(roundCount, (
+                                                          rIndex,
+                                                        ) {
+                                                          final player =
+                                                              _activePlayers[playerIndex];
+                                                          final score =
+                                                              rIndex <
+                                                                  _rounds.length
+                                                              ? (_rounds[rIndex][player
+                                                                        .id] ??
+                                                                    0)
+                                                              : (_currentRound?[player
+                                                                        .id] ??
+                                                                    0);
+                                                          final isCurrentRound =
+                                                              rIndex ==
+                                                                  _rounds
+                                                                      .length &&
+                                                              _currentRound !=
+                                                                  null;
+                                                          final isCompletedRound =
+                                                              rIndex <
+                                                              _rounds.length;
+                                                          return GestureDetector(
+                                                            onLongPressStart:
+                                                                isCompletedRound
+                                                                ? (_) {
+                                                                    _longPressTimer
+                                                                        ?.cancel();
+                                                                    _longPressTimer = Timer(
+                                                                      const Duration(
+                                                                        seconds:
+                                                                            2,
+                                                                      ),
+                                                                      () {
+                                                                        if (mounted) {
+                                                                          _showEditScoreDialog(
+                                                                            rIndex,
+                                                                            playerIndex,
+                                                                          );
+                                                                        }
+                                                                      },
+                                                                    );
+                                                                  }
                                                                 : null,
-                                                            child: Center(
-                                                              child: Text(
-                                                                score == 0
-                                                                    ? '0'
-                                                                    : (score > 0
-                                                                          ? '+$score'
-                                                                          : '$score'),
-                                                                style: TextStyle(
-                                                                  color:
-                                                                      score < 0
-                                                                      ? const Color(
-                                                                          0xFF30E8BF,
-                                                                        )
-                                                                      : Colors.white.withValues(
-                                                                          alpha:
-                                                                              0.7,
+                                                            onLongPressEnd:
+                                                                isCompletedRound
+                                                                ? (_) {
+                                                                    _longPressTimer
+                                                                        ?.cancel();
+                                                                  }
+                                                                : null,
+                                                            onLongPressCancel:
+                                                                isCompletedRound
+                                                                ? () {
+                                                                    _longPressTimer
+                                                                        ?.cancel();
+                                                                  }
+                                                                : null,
+                                                            child: SizedBox(
+                                                              width: roundWidth,
+                                                              child: Container(
+                                                                decoration:
+                                                                    isCurrentRound
+                                                                    ? BoxDecoration(
+                                                                        color:
+                                                                            const Color(
+                                                                              0xFF30E8BF,
+                                                                            ).withValues(
+                                                                              alpha: 0.1,
+                                                                            ),
+                                                                        border: Border.all(
+                                                                          color:
+                                                                              const Color(
+                                                                                0xFF30E8BF,
+                                                                              ).withValues(
+                                                                                alpha: 0.3,
+                                                                              ),
+                                                                          width:
+                                                                              1,
                                                                         ),
-                                                                  fontSize: 15,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontFamily:
-                                                                      'monospace',
+                                                                      )
+                                                                    : null,
+                                                                child: Center(
+                                                                  child: Text(
+                                                                    score == 0
+                                                                        ? '0'
+                                                                        : (score > 0
+                                                                              ? '+$score'
+                                                                              : '$score'),
+                                                                    style: TextStyle(
+                                                                      color:
+                                                                          score <
+                                                                              0
+                                                                          ? const Color(
+                                                                              0xFF30E8BF,
+                                                                            )
+                                                                          : Colors.white.withValues(
+                                                                              alpha: 0.7,
+                                                                            ),
+                                                                      fontSize:
+                                                                          15,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      fontFamily:
+                                                                          'monospace',
+                                                                    ),
+                                                                  ),
                                                                 ),
                                                               ),
                                                             ),
-                                                          ),
-                                                        );
-                                                      }),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                      ),
-                                    ],
+                                                          );
+                                                        }),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Score Input Section
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _isInputExpanded
-                ? Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1B263B).withValues(alpha: 0.95),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(24),
-                        topRight: Radius.circular(24),
-                      ),
-                      border: Border(
-                        top: BorderSide(
-                          color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                    child: SafeArea(
-                      top: false,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Player name and cancel button row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // Current player name
-                              Expanded(
-                                child: Text(
-                                  _activePlayers[_currentPlayerIndex].name.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Color(0xFF30E8BF),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1,
-                                    fontFamily: 'serif',
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              // Cancel button
-                              GestureDetector(
-                                onTap: _cancelRound,
-                                behavior: HitTestBehavior.opaque,
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.2),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.close_rounded,
-                                    size: 18,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                              ),
-                            ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Score Input Section
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _isInputExpanded
+                  ? Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B263B).withValues(alpha: 0.95),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                        ),
+                        border: Border(
+                          top: BorderSide(
+                            color: const Color(
+                              0xFF30E8BF,
+                            ).withValues(alpha: 0.3),
+                            width: 1,
                           ),
-                          const SizedBox(height: 12),
-                          // Preset Buttons - Row 1
-                          Row(
-                            children: [
-                              Expanded(child: _buildPresetButton(0)),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(-40, label: '-40')),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(-140, label: '-140')),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(-500, label: languageService.translate('rummy'), isSpecial: true)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          // Preset Buttons - Row 2
-                          Row(
-                            children: [
-                              Expanded(child: _buildPresetButton(5, label: '+5')),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(10, label: '+10')),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(15, label: '+15')),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(20, label: '+20')),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          // Preset Buttons - Row 3
-                          Row(
-                            children: [
-                              Expanded(child: _buildPresetButton(30, label: '+30')),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(50, label: '+50')),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(100, label: '+100')),
-                              const SizedBox(width: 8),
-                              Expanded(child: _buildPresetButton(200, label: '+200')),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          // Input Field and Action Button
-                          Row(
-                            children: [
-                              // Score Input Field
-                              Expanded(
-                                flex: 2,
-                                child: Container(
-                                  height: 56, // Match button height (padding vertical 16 + content)
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.05),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: TextField(
-                                      controller: _scoreControllers[_activePlayers[_currentPlayerIndex].id],
-                                      keyboardType: const TextInputType.numberWithOptions(signed: true),
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Color(0xFF30E8BF),
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w900,
-                                        fontFamily: 'monospace',
-                                      ),
-                                      decoration: const InputDecoration(
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.zero,
-                                        isDense: true,
-                                        hintText: '0',
-                                        hintStyle: TextStyle(
-                                          color: Colors.white24,
-                                          fontSize: 24,
-                                        ),
-                                      ),
-                                      onTap: () {
-                                        final controller = _scoreControllers[_activePlayers[_currentPlayerIndex].id]!;
-                                        // Select all text when tapped
-                                        controller.selection = TextSelection(
-                                          baseOffset: 0,
-                                          extentOffset: controller.text.length,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              // ADD POINT or COMPLETE ROUND Button
-                              Expanded(
-                                flex: 2,
-                                child: ElevatedButton(
-                                  onPressed: _isOnLastPlayer() ? _finishRound : _addPoint,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _isOnLastPlayer()
-                                        ? const Color(0xFFFFD700) // Gold
-                                        : const Color(0xFF30E8BF),
-                                    foregroundColor: _isOnLastPlayer() ? Colors.black : Colors.black,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    elevation: 8,
-                                    shadowColor: _isOnLastPlayer()
-                                        ? const Color(0xFFFFD700).withValues(alpha: 0.5)
-                                        : const Color(0xFF30E8BF).withValues(alpha: 0.5),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        _isOnLastPlayer() ? Icons.check_circle_rounded : Icons.add_rounded,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _isOnLastPlayer() ? languageService.translate('complete') : languageService.translate('add_point'),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 2,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            blurRadius: 20,
+                            spreadRadius: 5,
                           ),
                         ],
                       ),
-                    ),
-                  )
-                : SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _expandInput,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF30E8BF),
-                                foregroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                elevation: 8,
-                                shadowColor: const Color(0xFF30E8BF).withValues(alpha: 0.5),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.add_rounded, size: 24),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    languageService.translate('add_round'),
+                      child: SafeArea(
+                        top: false,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Player name and cancel button row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Current player name
+                                Expanded(
+                                  child: Text(
+                                    _activePlayers[_currentPlayerIndex].name
+                                        .toUpperCase(),
                                     style: const TextStyle(
+                                      color: Color(0xFF30E8BF),
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w900,
-                                      letterSpacing: 2,
+                                      letterSpacing: 1,
+                                      fontFamily: 'serif',
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Cancel button
+                                GestureDetector(
+                                  onTap: _cancelRound,
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      size: 18,
+                                      color: Colors.white70,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ),
-                          if (_rounds.isNotEmpty) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(height: 12),
+                            // Preset Buttons - Row 1
+                            Row(
+                              children: [
+                                Expanded(child: _buildPresetButton(0)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(-40, label: '-40'),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(
+                                    -140,
+                                    label: '-140',
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(
+                                    -500,
+                                    label: languageService.translate('rummy'),
+                                    isSpecial: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            // Preset Buttons - Row 2
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPresetButton(5, label: '+5'),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(10, label: '+10'),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(15, label: '+15'),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(20, label: '+20'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            // Preset Buttons - Row 3
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPresetButton(30, label: '+30'),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(50, label: '+50'),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(100, label: '+100'),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildPresetButton(200, label: '+200'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // Input Field and Action Button
+                            Row(
+                              children: [
+                                // Score Input Field
+                                Expanded(
+                                  flex: 2,
+                                  child: Container(
+                                    height:
+                                        56, // Match button height (padding vertical 16 + content)
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: const Color(
+                                          0xFF30E8BF,
+                                        ).withValues(alpha: 0.3),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: TextField(
+                                        controller:
+                                            _scoreControllers[_activePlayers[_currentPlayerIndex]
+                                                .id],
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                              signed: true,
+                                            ),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Color(0xFF30E8BF),
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w900,
+                                          fontFamily: 'monospace',
+                                        ),
+                                        decoration: const InputDecoration(
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.zero,
+                                          isDense: true,
+                                          hintText: '0',
+                                          hintStyle: TextStyle(
+                                            color: Colors.white24,
+                                            fontSize: 24,
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          final controller =
+                                              _scoreControllers[_activePlayers[_currentPlayerIndex]
+                                                  .id]!;
+                                          // Select all text when tapped
+                                          controller.selection = TextSelection(
+                                            baseOffset: 0,
+                                            extentOffset:
+                                                controller.text.length,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // ADD POINT or COMPLETE ROUND Button
+                                Expanded(
+                                  flex: 2,
+                                  child: ElevatedButton(
+                                    onPressed: _isOnLastPlayer()
+                                        ? _finishRound
+                                        : _addPoint,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _isOnLastPlayer()
+                                          ? const Color(0xFFFFD700) // Gold
+                                          : const Color(0xFF30E8BF),
+                                      foregroundColor: _isOnLastPlayer()
+                                          ? Colors.black
+                                          : Colors.black,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      elevation: 8,
+                                      shadowColor: _isOnLastPlayer()
+                                          ? const Color(
+                                              0xFFFFD700,
+                                            ).withValues(alpha: 0.5)
+                                          : const Color(
+                                              0xFF30E8BF,
+                                            ).withValues(alpha: 0.5),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          _isOnLastPlayer()
+                                              ? Icons.check_circle_rounded
+                                              : Icons.add_rounded,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _isOnLastPlayer()
+                                              ? languageService.translate(
+                                                  'complete',
+                                                )
+                                              : languageService.translate(
+                                                  'add_point',
+                                                ),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 2,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
+                        child: Row(
+                          children: [
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: _declareWinner,
+                                onPressed: _expandInput,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFFD700),
+                                  backgroundColor: const Color(0xFF30E8BF),
                                   foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 20,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   elevation: 8,
-                                  shadowColor: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                                  shadowColor: const Color(
+                                    0xFF30E8BF,
+                                  ).withValues(alpha: 0.5),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.emoji_events_rounded, size: 24),
-                                    const SizedBox(width: 8),
+                                    const Icon(Icons.add_rounded, size: 24),
+                                    const SizedBox(width: 3),
                                     Text(
-                                      languageService.translate('finish'),
+                                      languageService.translate('add_round'),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: 2,
@@ -1550,15 +2475,79 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen> with Ti
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            // Add Player Button
+                            SizedBox(
+                              height: 60,
+                              width: 60,
+                              child: ElevatedButton(
+                                onPressed: _showAddPlayerDialog,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 4,
+                                  side: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.person_add_rounded,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                            if (_rounds.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _declareWinner,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFFD700),
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 20,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    elevation: 8,
+                                    shadowColor: const Color(
+                                      0xFFFFD700,
+                                    ).withValues(alpha: 0.5),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.emoji_events_rounded,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        languageService.translate('finish'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                  
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
       ),
     );
   }
