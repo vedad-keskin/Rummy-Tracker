@@ -1040,234 +1040,243 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen>
                     ),
                   ],
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header
-                    Text(
-                      languageService.translate('edit_score'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                        fontFamily: 'serif',
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header
+                      Text(
+                        languageService.translate('edit_score'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                          fontFamily: 'serif',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${player.name.toUpperCase()} — R${roundIndex + 1}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFF30E8BF),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                        fontFamily: 'serif',
+                      const SizedBox(height: 8),
+                      Text(
+                        '${player.name.toUpperCase()} — R${roundIndex + 1}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFF30E8BF),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                          fontFamily: 'serif',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Preset Buttons Row 1
-                    Row(
-                      children: [
-                        Expanded(child: buildEditPresetButton(0)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(-40, label: '-40'),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(-140, label: '-140'),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(
-                            -500,
-                            label: languageService.translate('rummy'),
-                            isSpecial: true,
+                      // Preset Buttons Row 1
+                      Row(
+                        children: [
+                          Expanded(child: buildEditPresetButton(0)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(-40, label: '-40'),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    // Row 2
-                    Row(
-                      children: [
-                        Expanded(child: buildEditPresetButton(5, label: '+5')),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(10, label: '+10'),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(15, label: '+15'),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(20, label: '+20'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    // Row 3
-                    Row(
-                      children: [
-                        Expanded(
-                          child: buildEditPresetButton(30, label: '+30'),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(50, label: '+50'),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(100, label: '+100'),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: buildEditPresetButton(200, label: '+200'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Score Input Field
-                    Container(
-                      height: 56,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: TextField(
-                          controller: editController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            signed: true,
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(-140, label: '-140'),
                           ),
-                          textAlign: TextAlign.center,
-                          autofocus: true,
-                          style: const TextStyle(
-                            color: Color(0xFF30E8BF),
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            fontFamily: 'monospace',
-                          ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            isDense: true,
-                          ),
-                          onTap: () {
-                            editController.selection = TextSelection(
-                              baseOffset: 0,
-                              extentOffset: editController.text.length,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Action buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () => Navigator.of(dialogContext).pop(),
-                            child: Text(
-                              languageService.translate('cancel'),
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
-                              ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(
+                              -500,
+                              label: languageService.translate('rummy'),
+                              isSpecial: true,
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Row 2
+                      Row(
+                        children: [
+                          Expanded(
+                            child: buildEditPresetButton(5, label: '+5'),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(10, label: '+10'),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(15, label: '+15'),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(20, label: '+20'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Row 3
+                      Row(
+                        children: [
+                          Expanded(
+                            child: buildEditPresetButton(30, label: '+30'),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(50, label: '+50'),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(100, label: '+100'),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: buildEditPresetButton(200, label: '+200'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Score Input Field
+                      Container(
+                        height: 56,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(
+                              0xFF30E8BF,
+                            ).withValues(alpha: 0.3),
+                            width: 2,
+                          ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              final newScore =
-                                  int.tryParse(editController.text) ?? 0;
-                              Navigator.of(dialogContext).pop();
-
-                              setState(() {
-                                _rounds[roundIndex][player.id] = newScore;
-                              });
-
-                              _sortPlayersByScore(animate: true);
-                              _saveGameState();
-
-                              final messenger = ScaffoldMessenger.of(
-                                this.context,
-                              );
-                              messenger.hideCurrentSnackBar();
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.check_circle_rounded,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          languageService.translate(
-                                            'score_updated',
-                                          ),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontFamily: 'serif',
-                                            fontWeight: FontWeight.w100,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  backgroundColor: const Color(
-                                    0xFF30E8BF,
-                                  ).withValues(alpha: 0.8),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  margin: const EdgeInsets.all(16),
-                                  elevation: 10,
-                                  duration: const Duration(seconds: 2),
-                                ),
+                        child: Center(
+                          child: TextField(
+                            controller: editController,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              signed: true,
+                            ),
+                            textAlign: TextAlign.center,
+                            autofocus: true,
+                            style: const TextStyle(
+                              color: Color(0xFF30E8BF),
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'monospace',
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                            ),
+                            onTap: () {
+                              editController.selection = TextSelection(
+                                baseOffset: 0,
+                                extentOffset: editController.text.length,
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF30E8BF),
-                              foregroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: Text(
-                              languageService.translate('save'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(),
+                              child: Text(
+                                languageService.translate('cancel'),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 2,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                final newScore =
+                                    int.tryParse(editController.text) ?? 0;
+                                Navigator.of(dialogContext).pop();
+
+                                setState(() {
+                                  _rounds[roundIndex][player.id] = newScore;
+                                });
+
+                                _sortPlayersByScore(animate: true);
+                                _saveGameState();
+
+                                final messenger = ScaffoldMessenger.of(
+                                  this.context,
+                                );
+                                messenger.hideCurrentSnackBar();
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            languageService.translate(
+                                              'score_updated',
+                                            ),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: 'serif',
+                                              fontWeight: FontWeight.w100,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: const Color(
+                                      0xFF30E8BF,
+                                    ).withValues(alpha: 0.8),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    margin: const EdgeInsets.all(16),
+                                    elevation: 10,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF30E8BF),
+                                foregroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                              child: Text(
+                                languageService.translate('save'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -1801,7 +1810,18 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 48),
+                        IconButton(
+                          onPressed: _showAddPlayerDialog,
+                          icon: const Icon(
+                            Icons.person_add_rounded,
+                            color: Colors.white,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.1,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -2050,7 +2070,7 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen>
                                                                     _longPressTimer = Timer(
                                                                       const Duration(
                                                                         seconds:
-                                                                            2,
+                                                                            1,
                                                                       ),
                                                                       () {
                                                                         if (mounted) {
@@ -2472,33 +2492,6 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen>
                                       ),
                                     ),
                                   ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Add Player Button
-                            SizedBox(
-                              height: 60,
-                              width: 60,
-                              child: ElevatedButton(
-                                onPressed: _showAddPlayerDialog,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  elevation: 4,
-                                  side: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.person_add_rounded,
-                                  size: 24,
                                 ),
                               ),
                             ),
