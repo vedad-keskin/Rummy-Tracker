@@ -7,6 +7,7 @@ import 'package:rummy_tracker/components/team_credits_dialog.dart';
 import 'package:rummy_tracker/components/language_switch.dart';
 import 'package:rummy_tracker/components/how_to_play_button.dart';
 import 'package:rummy_tracker/components/rules_dialog.dart';
+import 'package:rummy_tracker/components/studio_mark.dart';
 import 'package:rummy_tracker/game_flow/phase_one_selection.dart';
 import 'package:rummy_tracker/game_flow/phase_two_tracking.dart';
 import 'package:rummy_tracker/offline_db/game_state_service.dart';
@@ -375,7 +376,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
           ),
-          // Version Info (Static)
+          // Studio branding / credits trigger
           Positioned(
             right: 16,
             bottom: 16,
@@ -393,16 +394,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               onLongPressCancel: () {
                 _easterEggTimer?.cancel();
               },
-              child: Text(
-                'Rummy Tracker v3.1.2',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.24),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w300,
-                  letterSpacing: 1,
-                  fontFamily: 'serif',
-                ),
-              ),
+              child: const StudioMark(forceInvert: true, height: 22),
             ),
           ),
         ],

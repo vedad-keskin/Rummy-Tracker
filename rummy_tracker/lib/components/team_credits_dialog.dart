@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/language_service.dart';
+import 'package:rummy_tracker/components/studio_mark.dart';
 
 class TeamCreditsDialog extends StatelessWidget {
   const TeamCreditsDialog({super.key});
@@ -8,7 +9,7 @@ class TeamCreditsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageService = context.watch<LanguageService>();
-    
+
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Stack(
@@ -35,36 +36,7 @@ class TeamCreditsDialog extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Title section matching main layout style
-                Column(
-                  children: [
-                    Text(
-                      languageService.translate('app_title_rummy'),
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 6,
-                        fontFamily: 'serif',
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            blurRadius: 15,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      languageService.translate('app_title_tracker'),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.white.withValues(alpha: 0.7),
-                        letterSpacing: 10,
-                      ),
-                    ),
-                  ],
-                ),
+                const StudioMark(forceInvert: true, height: 40),
                 const SizedBox(height: 48),
                 // Credits content
                 _buildCreditItem(
