@@ -1,4 +1,4 @@
-package com.example.rummy_tracker
+package com.nightfall.rummytracker
 
 import io.flutter.embedding.android.FlutterActivity
 
