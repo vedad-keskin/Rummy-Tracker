@@ -1733,6 +1733,92 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen>
     );
   }
 
+  Widget _buildEmptyRounds(LanguageService language) {
+    if (_isInputExpanded) return const SizedBox.shrink();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight < 220 || constraints.maxWidth < 180;
+        final title = Text(
+          language.translate('no_rounds'),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.9),
+            fontSize: compact ? 13 : 16,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'serif',
+          ),
+        );
+        const icon = Icon(
+          Icons.edit_note_rounded,
+          color: Color(0xFF30E8BF),
+          size: 26,
+        );
+
+        return Align(
+          alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(12, compact ? 0 : 8, 12, 16),
+            child: Container(
+              key: const ValueKey('empty-rounds'),
+              constraints: const BoxConstraints(maxWidth: 224),
+              padding: EdgeInsets.all(compact ? 8 : 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF30E8BF).withValues(alpha: 0.08),
+                    Colors.white.withValues(alpha: 0.03),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFF30E8BF).withValues(alpha: 0.16),
+                ),
+              ),
+              child: compact
+                  ? Row(
+                      children: [
+                        icon,
+                        const SizedBox(width: 8),
+                        Expanded(child: title),
+                      ],
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(
+                              0xFF30E8BF,
+                            ).withValues(alpha: 0.10),
+                          ),
+                          child: icon,
+                        ),
+                        const SizedBox(height: 12),
+                        title,
+                        const SizedBox(height: 8),
+                        Text(
+                          language.translate('no_rounds_hint'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final languageService = context.watch<LanguageService>();
@@ -1983,21 +2069,8 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen>
                                           child:
                                               (_rounds.isEmpty &&
                                                   _currentRound == null)
-                                              ? Center(
-                                                  child: Text(
-                                                    languageService.translate(
-                                                      'no_rounds',
-                                                    ),
-                                                    style: TextStyle(
-                                                      color: Colors.white
-                                                          .withValues(
-                                                            alpha: 0.1,
-                                                          ),
-                                                      letterSpacing: 2,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
+                                              ? _buildEmptyRounds(
+                                                  languageService,
                                                 )
                                               : ListView.builder(
                                                   controller:

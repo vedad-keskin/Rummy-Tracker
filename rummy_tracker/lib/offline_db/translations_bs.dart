@@ -38,7 +38,8 @@ const Map<String, String> bsTranslations = {
 
   // Tracking Screen
   'points_tracker': 'PRAĆENJE BODOVA',
-  'no_rounds': 'NEMA RUNDI',
+  'no_rounds': 'Spremni za bodove',
+  'no_rounds_hint': 'Dodajte rundu ispod i unesite prve bodove.',
   'add_round': 'DODAJ RUNDU',
   'finish': 'ZAVRŠI',
   'add_point': 'DODAJ BOD',
@@ -71,7 +72,7 @@ const Map<String, String> bsTranslations = {
   'return_home': 'NAZAD NA POČETAK',
 
   // Team Credits
-  'project_lead': 'PROJECT LEAD',
+  'project_lead': 'VODITELJ PROJEKTA',
   'close': 'ZATVORI',
 
   // Common

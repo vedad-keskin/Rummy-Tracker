@@ -31,13 +31,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       barrierDismissible: true,
       barrierLabel: context.read<LanguageService>().translate('about_app'),
       barrierColor: Colors.black87,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: Duration(
+        milliseconds: MediaQuery.disableAnimationsOf(context) ? 150 : 220,
+      ),
       pageBuilder: (context, anim1, anim2) => const TeamCreditsDialog(),
       transitionBuilder: (context, anim1, anim2, child) {
-        return ScaleTransition(
-          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
-          child: FadeTransition(opacity: anim1, child: child),
-        );
+        return FadeTransition(opacity: anim1, child: child);
       },
     );
   }

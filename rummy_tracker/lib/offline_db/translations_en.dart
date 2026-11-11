@@ -38,7 +38,8 @@ const Map<String, String> enTranslations = {
 
   // Tracking Screen
   'points_tracker': 'POINTS TRACKER',
-  'no_rounds': 'NO ROUNDS',
+  'no_rounds': 'Ready to score',
+  'no_rounds_hint': 'Add a round below to record your first scores.',
   'add_round': 'ADD ROUND',
   'finish': 'FINISH',
   'add_point': 'ADD POINT',
