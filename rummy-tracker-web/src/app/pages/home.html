@@ -1,0 +1,38 @@
+<section class="hero">
+  <p class="eyebrow">Offline scorekeeper</p>
+  <h1>Rummy Tracker</h1>
+  <p class="lead">
+    Keep score for Rummy and Remi on your phone. The app does not deal cards, take bets, or
+    connect to the internet.
+  </p>
+  <p class="lead bs">
+    Vodite rezultat za remi na telefonu. Aplikacija ne dijeli karte, ne prima uloge i ne koristi
+    internet.
+  </p>
+  <div class="actions">
+    <a routerLink="/privacy" class="button">Privacy policy</a>
+    <a routerLink="/listing" class="button quiet">Play listing text</a>
+  </div>
+</section>
+
+<section class="facts">
+  <article>
+    <h2>On the device</h2>
+    <p>Names, scores, rankings, and the current game stay in private storage on the phone.</p>
+  </article>
+  <article>
+    <h2>No wagering</h2>
+    <p>Preset scores are -40, -140, and -500. The lowest total wins. No money moves.</p>
+  </article>
+  <article>
+    <h2>Two languages</h2>
+    <p>The Android app can be used in English or Bosnian, and you can switch at any time.</p>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>Developer</h2>
+  <p>{{ developer.name }}</p>
+  <p><a [href]="'mailto:' + developer.email">{{ developer.email }}</a></p>
+  <p class="meta">Android package {{ developer.packageId }}</p>
+</section>

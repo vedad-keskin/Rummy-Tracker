@@ -1,0 +1,19 @@
+<div class="site">
+  <header class="top">
+    <a routerLink="/" class="brand">Rummy Tracker</a>
+    <nav aria-label="Pages">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+        >Overview</a
+      >
+      <a routerLink="/privacy" routerLinkActive="active">Privacy</a>
+      <a routerLink="/listing" routerLinkActive="active">Play listing</a>
+    </nav>
+  </header>
+  <main>
+    <router-outlet />
+  </main>
+  <footer>
+    <p>{{ developer.name }}</p>
+    <p><a [href]="'mailto:' + developer.email">{{ developer.email }}</a></p>
+  </footer>
+</div>

@@ -1,0 +1,61 @@
+<p class="eyebrow">Copy into Google Play Console</p>
+<h1>Store listing</h1>
+<p class="lead">
+  After this site is deployed, set the privacy policy URL to
+  <strong>https://&lt;your-vercel-domain&gt;/privacy</strong>.
+</p>
+
+<section class="panel">
+  <h2>Console answers</h2>
+  <dl>
+    @for (item of playConsole; track item.label) {
+      <div>
+        <dt>{{ item.label }}</dt>
+        <dd>{{ item.value }}</dd>
+      </div>
+    }
+  </dl>
+</section>
+
+@for (listing of listings; track listing.id) {
+  <article class="policy">
+    <header>
+      <h2>{{ listing.languageName }}</h2>
+    </header>
+
+    <section class="copy-block">
+      <div class="copy-head">
+        <h3>App name</h3>
+        <p class="meta">{{ listing.appName.length }} / {{ limits.name }}</p>
+        <button type="button" (click)="copy(listing.id + '-name', listing.appName)">
+          {{ copied() === listing.id + '-name' ? 'Copied' : 'Copy' }}
+        </button>
+      </div>
+      <p>{{ listing.appName }}</p>
+    </section>
+
+    <section class="copy-block">
+      <div class="copy-head">
+        <h3>Short description</h3>
+        <p class="meta">{{ listing.shortDescription.length }} / {{ limits.short }}</p>
+        <button type="button" (click)="copy(listing.id + '-short', listing.shortDescription)">
+          {{ copied() === listing.id + '-short' ? 'Copied' : 'Copy' }}
+        </button>
+      </div>
+      <p>{{ listing.shortDescription }}</p>
+    </section>
+
+    <section class="copy-block">
+      <div class="copy-head">
+        <h3>Full description</h3>
+        <p class="meta">{{ listing.fullDescription.length }} / {{ limits.full }}</p>
+        <button type="button" (click)="copy(listing.id + '-full', listing.fullDescription)">
+          {{ copied() === listing.id + '-full' ? 'Copied' : 'Copy' }}
+        </button>
+      </div>
+      <pre>{{ listing.fullDescription }}</pre>
+    </section>
+  </article>
+}
+
+<p class="meta">Developer contact for the listing: {{ developer.email }}</p>
