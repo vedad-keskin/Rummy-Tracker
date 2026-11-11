@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:rummy_tracker/background.dart';
+import 'package:rummy_tracker/components/card_artwork.dart';
 import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
 import 'package:rummy_tracker/offline_db/language_service.dart';
@@ -40,8 +41,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
       for (var player in players) {
         if (!_playerSuits.containsKey(player.id)) {
           _playerSuits[player.id] = _random.nextInt(4);
-          // Rotation strictly between 0.3 and 0.8 radians (bottom-left tilt)
-          _playerRotations[player.id] = 0.3 + (_random.nextDouble() * 0.5);
+          _playerRotations[player.id] = 0.14 + (_random.nextDouble() * 0.07);
         }
       }
 
@@ -88,49 +88,18 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
     }
   }
 
-  Widget _getSuitIcon(String playerId, {double size = 20}) {
-    final suitIndex = _playerSuits[playerId] ?? 0;
-    final rotation = _playerRotations[playerId] ?? 0.0;
-
-    final suits = [
-      {'char': '♥', 'color': const Color(0xFFFF4D4D)},
-      {'char': '♦', 'color': const Color(0xFFFF4D4D)},
-      {'char': '♣', 'color': Colors.white},
-      {'char': '♠', 'color': Colors.white},
-    ];
-    final suit = suits[suitIndex];
-
-    return Transform.rotate(
-      angle: rotation,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.9),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: (suit['color'] as Color).withValues(alpha: 0.5),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: (suit['color'] as Color).withValues(alpha: 0.3),
-              blurRadius: 10,
-              spreadRadius: 2,
+  Widget _buildPlayerCard(String playerId) {
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: Transform.rotate(
+          angle: _playerRotations[playerId] ?? 0.0,
+          child: SizedBox(
+            width: 34,
+            height: 49,
+            child: CustomPaint(
+              key: ValueKey('selection-card-$playerId'),
+              painter: AcePainter(_playerSuits[playerId] ?? 0),
             ),
-          ],
-        ),
-        child: Text(
-          suit['char'] as String,
-          style: TextStyle(
-            color: (suit['color'] as Color),
-            fontSize: size,
-            fontWeight: FontWeight.bold,
-            shadows: [
-              Shadow(
-                color: (suit['color'] as Color).withValues(alpha: 0.5),
-                blurRadius: 10,
-              ),
-            ],
           ),
         ),
       ),
@@ -141,6 +110,9 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
   Widget build(BuildContext context) {
     final languageService = context.watch<LanguageService>();
     final bool canStart = _selectedPlayerIds.length >= 2;
+    final cardDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 200);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -247,11 +219,13 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                             ),
                           )
                         : ListView.separated(
-                            clipBehavior: Clip.none,
-                            padding: const EdgeInsets.only(bottom: 120),
+                            padding: const EdgeInsets.only(
+                              top: 24,
+                              bottom: 120,
+                            ),
                             itemCount: _allPlayers.length,
                             separatorBuilder: (_, __) =>
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 28),
                             itemBuilder: (context, index) {
                               final player = _allPlayers[index];
                               final isSelected = _selectedPlayerIds.contains(
@@ -353,7 +327,9 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                                     ),
                                                   ),
                                                   Text(
-                                                    languageService.translate('wins'),
+                                                    languageService.translate(
+                                                      'wins',
+                                                    ),
                                                     style: TextStyle(
                                                       color: isSelected
                                                           ? Colors.white54
@@ -384,6 +360,7 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                                 ),
                                               ),
                                             ),
+                                            const SizedBox(width: 12),
                                             AnimatedScale(
                                               scale: isSelected ? 1.0 : 0.0,
                                               duration: const Duration(
@@ -408,24 +385,19 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                           ],
                                         ),
                                       ),
-                                      // Decorative Overlapping Suit (Top-Right Border) - Only visible when selected
+                                      // Decorative ace above the selection check.
                                       Positioned(
-                                        top: -12,
-                                        right: -5,
+                                        top: -20,
+                                        right: 12,
                                         child: AnimatedScale(
-                                          scale: isSelected ? 1.0 : 0.0,
-                                          duration: const Duration(
-                                            milliseconds: 500,
-                                          ),
-                                          curve: Curves.elasticOut,
+                                          scale: isSelected ? 1.0 : 0.85,
+                                          duration: cardDuration,
+                                          curve: Curves.easeOutCubic,
                                           child: AnimatedOpacity(
                                             opacity: isSelected ? 1.0 : 0.0,
-                                            duration: const Duration(
-                                              milliseconds: 200,
-                                            ),
-                                            child: isSelected
-                                                ? _getSuitIcon(player.id)
-                                                : const SizedBox.shrink(),
+                                            duration: cardDuration,
+                                            curve: Curves.easeOutCubic,
+                                            child: _buildPlayerCard(player.id),
                                           ),
                                         ),
                                       ),
