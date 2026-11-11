@@ -1,39 +1,35 @@
-<section class="hero">
-  <img class="hero-logo" src="logo.png" width="1254" height="1254" alt="Rummy Tracker logo" />
-  <p class="eyebrow">Offline scorekeeper</p>
-  <h1>Rummy Tracker</h1>
-  <p class="lead">
-    Keep score for Rummy and Remi on your phone. The app does not deal cards, take bets, or
-    connect to the internet.
-  </p>
-  <p class="lead bs">
-    Vodite rezultat za remi na telefonu. Aplikacija ne dijeli karte, ne prima uloge i ne koristi
-    internet.
-  </p>
-  <div class="actions">
-    <a routerLink="/privacy" class="button">Privacy policy</a>
-    <a routerLink="/listing" class="button quiet">Play listing text</a>
+<section class="hero" aria-labelledby="home-title">
+  <img class="hero-image" src="game-night-hero.webp" width="1536" height="1024" alt="Four ivory aces on a midnight-blue card table" fetchpriority="high" />
+  <div class="hero-copy">
+    <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> A little companion for game night</p>
+    <h1 id="home-title">Deal the cards.<br /><em>We’ll keep score.</em></h1>
+    <p class="hero-description">Keep every round, friendly rivalry, and well-earned win in one place. Your offline scorekeeper for Rummy and Remi.</p>
+    <a class="button button-primary" routerLink="/privacy">Privacy, explained <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+    <ul class="hero-details" aria-label="App highlights"><li>Works offline</li><li>No ads</li><li>English &amp; Bosnian</li></ul>
   </div>
+  <div class="hero-caption"><span aria-hidden="true">✦</span> Real cards. Good company.</div>
 </section>
 
-<section class="facts">
+<section class="features" aria-label="A simpler way to keep score">
   <article>
-    <h2>On the device</h2>
-    <p>Names, scores, rankings, and the current game stay in private storage on the phone.</p>
+    <span class="feature-number">01 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h5M8 16h8"/></svg></span>
+    <h2>Every round, in order.</h2>
+    <p>Enter scores in a few taps. Totals and standings update as you go.</p>
   </article>
   <article>
-    <h2>No wagering</h2>
-    <p>Preset scores are -40, -140, and -500. The lowest total wins. No money moves.</p>
+    <span class="feature-number">02 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a8 8 0 1 1-1 7M4 4v5h5M12 8v5l3 2"/></svg></span>
+    <h2>Pick up the next hand.</h2>
+    <p>Your unfinished game is saved, ready whenever the table gets back together.</p>
   </article>
   <article>
-    <h2>Two languages</h2>
-    <p>The Android app can be used in English or Bosnian, and you can switch at any time.</p>
+    <span class="feature-number">03 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v7a4 4 0 0 1-8 0zM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 14v5m-4 2h8"/></svg></span>
+    <h2>A little friendly rivalry.</h2>
+    <p>Keep your player roster and all-time wins. Every game adds to the story.</p>
   </article>
 </section>
 
-<section class="panel">
-  <h2>Developer</h2>
-  <p>{{ developer.name }}</p>
-  <p><a [href]="'mailto:' + developer.email">{{ developer.email }}</a></p>
-  <p class="meta">Android package {{ developer.packageId }}</p>
+<section class="privacy-callout" aria-labelledby="privacy-callout-title">
+  <div class="privacy-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 8 3v5c0 5-8 10-8 10S4 16 4 11V6z"/><path d="m8 11 3 3 5-5"/></svg></div>
+  <div><p class="eyebrow">Made to stay personal</p><h2 id="privacy-callout-title">Your game. Your data.</h2><p>Names, scores, and rankings are stored on your device. No account needed.</p></div>
+  <a class="text-link" routerLink="/privacy">Read our privacy policy <span aria-hidden="true">↗</span></a>
 </section>

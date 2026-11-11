@@ -1,31 +1,47 @@
-<p class="eyebrow">Google Play privacy policy</p>
-<h1>Privacy policy</h1>
-<nav class="jump" aria-label="Languages">
-  @for (policy of policies; track policy.id) {
-    <a [href]="'#' + policy.id">{{ policy.languageName }}</a>
-  }
-</nav>
+<section class="privacy-page">
+  <header class="privacy-header" [attr.lang]="language()">
+    <a class="back-link" routerLink="/"><span aria-hidden="true">←</span> {{ isBosnian() ? 'Početna stranica' : 'Back to home' }}</a>
+    <p class="eyebrow">{{ isBosnian() ? 'Vaša privatnost' : 'Your privacy' }}</p>
+    <h1>{{ policy().title }}</h1>
+    <p class="privacy-intro">{{ policy().intro }}</p>
+    <div class="policy-toolbar">
+      <p class="effective-date">{{ isBosnian() ? 'Na snazi od' : 'Effective' }} <time datetime="2026-11-11">{{ policy().effective }}</time></p>
+      <div class="language-switch" aria-label="Policy language">
+        <button type="button" [attr.aria-pressed]="language() === 'en'" aria-controls="policy-en" (click)="language.set('en')">English</button>
+        <button type="button" [attr.aria-pressed]="language() === 'bs'" aria-controls="policy-bs" (click)="language.set('bs')">Bosanski</button>
+      </div>
+    </div>
+  </header>
 
-@for (policy of policies; track policy.id) {
-  <article [id]="policy.id" class="policy">
-    <header>
-      <h2>{{ policy.title }}</h2>
-      <p class="meta">{{ policy.effective }}</p>
-    </header>
-    @for (section of policy.sections; track section.heading) {
-      <section>
-        <h3>{{ section.heading }}</h3>
-        @for (paragraph of section.paragraphs ?? []; track paragraph) {
-          <p>{{ paragraph }}</p>
+  <div class="policy-layout">
+    <aside class="policy-toc" [attr.lang]="language()">
+      <p class="eyebrow">{{ isBosnian() ? 'Sadržaj' : 'On this page' }}</p>
+      <nav [attr.aria-label]="isBosnian() ? 'Sadržaj politike privatnosti' : 'Privacy policy contents'">
+        @for (section of policy().sections; track section.id; let index = $index) {
+          <a [routerLink]="[]" [fragment]="language() + '-' + section.id"><span>0{{ index + 1 }}</span>{{ section.heading }}</a>
         }
-        @if (section.bullets?.length) {
-          <ul>
-            @for (item of section.bullets; track item) {
-              <li>{{ item }}</li>
-            }
-          </ul>
-        }
-      </section>
-    }
-  </article>
-}
+      </nav>
+      <div class="toc-note"><span class="status-dot" aria-hidden="true"></span>{{ isBosnian() ? 'Bez naloga. Bez oglasa.' : 'No accounts. No ads.' }}</div>
+    </aside>
+
+    <div class="policy-documents">
+      @for (document of policies; track document.id) {
+        <article [id]="'policy-' + document.id" [attr.lang]="document.id" [hidden]="language() !== document.id" class="policy-document">
+          <div class="policy-summary">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v5c0 5-8 10-8 10S4 16 4 11V6z"/><path d="m8 11 3 3 5-5"/></svg>
+            <p>{{ document.id === 'bs' ? 'Aplikacija ne šalje vaše rezultate nama. Podaci igre čuvaju se na uređaju; postavke sistemske sigurnosne kopije mogu se primjenjivati.' : 'The app does not send your scores to us. Game data is stored on your device; your system backup settings may apply.' }}</p>
+          </div>
+          @for (section of document.sections; track section.id) {
+            <section [id]="document.id + '-' + section.id" class="policy-section">
+              <h2>{{ section.heading }}</h2>
+              @for (paragraph of section.paragraphs ?? []; track paragraph) { <p>{{ paragraph }}</p> }
+              @if (section.bullets?.length) {
+                <ul>@for (item of section.bullets; track item) { <li>{{ item }}</li> }</ul>
+              }
+            </section>
+          }
+        </article>
+      }
+    </div>
+  </div>
+</section>

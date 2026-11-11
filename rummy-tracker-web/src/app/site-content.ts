@@ -1,257 +1,139 @@
 export const developer = {
-  name: 'Vedad Keskin',
+  name: 'Nightfall Studio',
   email: 'vedad.keskin98@gmail.com',
   appName: 'Rummy Tracker',
-  packageId: 'com.rummy.tracker',
-  versionName: '3.1.2',
-  versionCode: '1',
 };
 
-export interface PolicySection {
+interface PolicySection {
+  id: string;
   heading: string;
   paragraphs?: string[];
   bullets?: string[];
 }
 
-export interface PolicyDocument {
+interface PolicyDocument {
   id: 'en' | 'bs';
-  languageName: string;
   title: string;
+  intro: string;
   effective: string;
   sections: PolicySection[];
-}
-
-export interface ListingCopy {
-  id: 'en' | 'bs';
-  languageName: string;
-  appName: string;
-  shortDescription: string;
-  fullDescription: string;
 }
 
 export const policies: PolicyDocument[] = [
   {
     id: 'en',
-    languageName: 'English',
-    title: 'Privacy policy',
-    effective: 'Effective 11 November 2026',
+    title: 'Privacy policy.',
+    intro: 'Here is what Rummy Tracker stores, what stays with you, and how you stay in control.',
+    effective: '11 November 2026',
     sections: [
       {
-        heading: 'Who this covers',
-        paragraphs: [
-          'This policy describes Rummy Tracker, an offline Android app for keeping score in Rummy and Remi. The developer is Vedad Keskin. Contact: vedad.keskin98@gmail.com.',
-          'The app does not deal cards, accept wagers, process payments, or connect to a game server. It records scores you enter.',
-        ],
+        id: 'about',
+        heading: 'About this policy',
+        paragraphs: ['This privacy policy covers Rummy Tracker, the offline Android companion for keeping score in Rummy and Remi games played with physical cards. The developer is Nightfall Studio.',
+          'The app records scores you enter. It does not operate accounts, deal cards, accept wagers, or process payments.'],
       },
       {
-        heading: 'Information stored on your device',
-        paragraphs: [
-          'The app saves the following in private storage on your phone. None of it is uploaded.',
-        ],
-        bullets: [
-          'Player names you type',
-          'Round scores, including the preset values -40, -140, and -500, and any custom number you enter',
-          'Session totals and the in-progress game, so a session can resume after you close the app',
-          'All-time win counts',
-          'Your language choice, English or Bosnian',
-        ],
+        id: 'storage',
+        heading: 'What the app stores',
+        paragraphs: ['Rummy Tracker uses Android’s app-private storage to save the information needed to run your games:'],
+        bullets: ['Player names and the players selected for a game.',
+          'Round scores, session totals, and your unfinished game.',
+          'All-time win counts and rankings.',
+          'Your language and background preferences.'],
       },
       {
-        heading: 'Information we do not collect',
-        paragraphs: [
-          'We do not collect, transmit, or share the information above. The release app does not use the internet. It has no accounts, no advertising, no analytics, and no advertising ID. No third-party service receives data from the app.',
-        ],
+        id: 'sharing',
+        heading: 'Collection & sharing',
+        paragraphs: ['We do not receive, collect, sell, or share your player names, scores, rankings, or app preferences. The app has no developer-run game server or cloud account.',
+          'The release app works without an internet connection. It contains no advertising, analytics, advertising ID access, or third-party tracking SDKs.'],
       },
       {
-        heading: 'Permissions',
-        paragraphs: [
-          'The release version does not request network, location, camera, microphone, contacts, or photo access.',
-        ],
+        id: 'backups',
+        heading: 'Backups & deleting data',
+        paragraphs: ['Game data stays in the app’s local storage until you change or remove it. You can edit or delete players and reset win records in the app. To remove all local app data, clear Rummy Tracker’s storage in Android Settings, or uninstall the app.',
+          'Android may include app data in system backups or device-to-device transfers, depending on your device and account settings. These are managed by your operating system and backup provider, not by us. We cannot access those backups.',
+          'Uninstalling or clearing storage removes the local copy; a system backup may still exist and may restore data when you reinstall. Manage those copies through your device’s backup settings. We do not retain a separate copy and cannot remotely access or erase data on your phone.'],
       },
       {
-        heading: 'Children',
-        paragraphs: [
-          'Rummy Tracker is a general-audience scorekeeper. It is not directed at children under 13, and it does not knowingly collect personal information from children. Names you type stay on the device.',
-        ],
+        id: 'permissions',
+        heading: 'Permissions & security',
+        paragraphs: ['The release app does not request internet, location, camera, microphone, contacts, or photo access.',
+          'Saved game information is kept in app-private storage. The security of your phone and any system backups also depends on your device lock, account security, and backup settings.'],
       },
       {
-        heading: 'How long data stays',
-        paragraphs: [
-          'Data remains on the device until you delete a player, reset win records, clear the app’s storage, or uninstall the app. Uninstalling the app deletes it. We do not keep a copy.',
-        ],
+        id: 'children',
+        heading: 'Children’s privacy',
+        paragraphs: ['Rummy Tracker is a general-audience scorekeeper and is not directed at children under 13. The app does not knowingly collect personal information from children. Player names and scores entered in the app are not sent to us.'],
       },
       {
-        heading: 'Your choices',
-        paragraphs: [
-          'You can edit or delete player names in the app, reset rankings, and leave an unfinished game. Because nothing is sent to us, we cannot access or delete that data for you.',
-        ],
+        id: 'website',
+        heading: 'Using this website',
+        paragraphs: ['This website does not add advertising, analytics, or tracking cookies.',
+          'To deliver these pages, our hosting provider receives standard connection information such as your IP address and browser request headers. The provider may maintain operational and security logs under its own policies. This is separate from the offline app.'],
       },
       {
-        heading: 'Changes',
-        paragraphs: [
-          'If this policy changes, the new version will be posted on this page with a new effective date.',
-        ],
-      },
-      {
-        heading: 'Contact',
-        paragraphs: ['Vedad Keskin', 'vedad.keskin98@gmail.com'],
+        id: 'changes',
+        heading: 'Changes to this policy',
+        paragraphs: ['If the app’s data practices change, we will update this page and its effective date. You can always find the current policy here.'],
       },
     ],
   },
   {
     id: 'bs',
-    languageName: 'Bosanski',
-    title: 'Politika privatnosti',
-    effective: 'Stupa na snagu 11. novembra 2026.',
+    title: 'Politika privatnosti.',
+    intro: 'Šta Rummy Tracker čuva, koji podaci ostaju kod vas i kako njima upravljate.',
+    effective: '11. novembra 2026.',
     sections: [
       {
-        heading: 'Na koga se odnosi',
-        paragraphs: [
-          'Ova politika opisuje Rummy Tracker, vanmrežnu Android aplikaciju za praćenje rezultata igre remi (rummy). Razvijatelj je Vedad Keskin. Kontakt: vedad.keskin98@gmail.com.',
-          'Aplikacija ne dijeli karte, ne prima uloge, ne obrađuje novac i ne povezuje se sa serverom za igru. Bilježi rezultate koje vi unesete.',
-        ],
+        id: 'about',
+        heading: 'O ovoj politici',
+        paragraphs: ['Ova politika privatnosti odnosi se na Rummy Tracker, vanmrežnu Android aplikaciju za praćenje rezultata remija koji igrate pravim kartama. Razvijatelj je Nightfall Studio.',
+          'Aplikacija bilježi rezultate koje unesete. Nema korisničkih naloga, ne dijeli karte, ne prima uloge i ne obrađuje plaćanja.'],
       },
       {
-        heading: 'Podaci koji ostaju na uređaju',
-        paragraphs: [
-          'Aplikacija čuva sljedeće u privatnoj pohrani na telefonu. Ništa od toga se ne šalje.',
-        ],
-        bullets: [
-          'Imena igrača koja upišete',
-          'Rezultate rundi, uključujući gotove vrijednosti -40, -140 i -500, i svaki broj koji sami unesete',
-          'Zbirove sesije i nedovršenu partiju, kako biste mogli nastaviti nakon zatvaranja aplikacije',
-          'Ukupan broj pobjeda',
-          'Odabrani jezik, engleski ili bosanski',
-        ],
+        id: 'storage',
+        heading: 'Šta aplikacija čuva',
+        paragraphs: ['Rummy Tracker koristi privatnu pohranu aplikacije na Androidu za podatke potrebne za vaše partije:'],
+        bullets: ['Imena igrača i igrače odabrane za partiju.',
+          'Rezultate rundi, ukupne rezultate i nedovršenu partiju.',
+          'Ukupan broj pobjeda i rang-listu.',
+          'Odabrani jezik i pozadinu.'],
       },
       {
-        heading: 'Podaci koje ne prikupljamo',
-        paragraphs: [
-          'Te podatke ne prikupljamo, ne prenosimo i ne dijelimo. Objavljena verzija ne koristi internet. Nema naloga, nema oglasa, nema analitike i nema reklamnog identifikatora. Nijedna usluga treće strane ne prima podatke iz aplikacije.',
-        ],
+        id: 'sharing',
+        heading: 'Prikupljanje i dijeljenje',
+        paragraphs: ['Ne primamo, ne prikupljamo, ne prodajemo i ne dijelimo vaša imena igrača, rezultate, rang-listu ili postavke. Aplikacija nema naš server za igru niti nalog u oblaku.',
+          'Objavljena aplikacija radi bez internetske veze. Nema oglasa, analitike, pristupa reklamnom identifikatoru niti alata trećih strana za praćenje.'],
       },
       {
-        heading: 'Dozvole',
-        paragraphs: [
-          'Objavljena verzija ne traži pristup mreži, lokaciji, kameri, mikrofonu, kontaktima ni fotografijama.',
-        ],
+        id: 'backups',
+        heading: 'Sigurnosne kopije i brisanje',
+        paragraphs: ['Podaci igre ostaju u lokalnoj pohrani aplikacije dok ih ne promijenite ili uklonite. U aplikaciji možete uređivati i brisati igrače te poništiti pobjede. Sve lokalne podatke možete ukloniti brisanjem pohrane aplikacije u Android postavkama ili deinstalacijom.',
+          'Android može uključiti podatke aplikacije u sistemske sigurnosne kopije ili prijenos između uređaja, zavisno od postavki uređaja i naloga. Time upravljaju operativni sistem i pružatelj sigurnosne kopije, a ne mi. Nemamo pristup tim kopijama.',
+          'Deinstalacija ili brisanje pohrane uklanja lokalnu kopiju. Sistemska sigurnosna kopija može ostati i vratiti podatke nakon ponovne instalacije. Njome upravljate u postavkama sigurnosne kopije uređaja. Ne čuvamo zasebnu kopiju i ne možemo daljinski pristupiti podacima na vašem telefonu niti ih obrisati.'],
       },
       {
-        heading: 'Djeca',
-        paragraphs: [
-          'Rummy Tracker je bilježnik rezultata za opštu publiku. Nije usmjeren na djecu mlađu od 13 godina i svjesno ne prikuplja lične podatke djece. Imena koja upišete ostaju na uređaju.',
-        ],
+        id: 'permissions',
+        heading: 'Dozvole i sigurnost',
+        paragraphs: ['Objavljena aplikacija ne traži pristup internetu, lokaciji, kameri, mikrofonu, kontaktima ili fotografijama.',
+          'Podaci igre čuvaju se u privatnoj pohrani aplikacije. Sigurnost telefona i sistemskih sigurnosnih kopija zavisi i od zaključavanja uređaja, sigurnosti naloga i postavki sigurnosne kopije.'],
       },
       {
-        heading: 'Koliko dugo podaci ostaju',
-        paragraphs: [
-          'Podaci ostaju na uređaju dok ne obrišete igrača, ne poništite pobjede, ne obrišete pohranu aplikacije ili je ne deinstalirate. Deinstalacija briše podatke. Mi nemamo njihovu kopiju.',
-        ],
+        id: 'children',
+        heading: 'Privatnost djece',
+        paragraphs: ['Rummy Tracker je bilježnik rezultata za opću publiku i nije namijenjen djeci mlađoj od 13 godina. Aplikacija svjesno ne prikuplja lične podatke djece. Imena i rezultati uneseni u aplikaciju ne šalju se nama.'],
       },
       {
-        heading: 'Vaš izbor',
-        paragraphs: [
-          'Imena igrača možete urediti ili obrisati u aplikaciji, poništiti rang-listu i napustiti nedovršenu partiju. Pošto nam se ništa ne šalje, ne možemo pristupiti tim podacima niti ih obrisati umjesto vas.',
-        ],
+        id: 'website',
+        heading: 'Ova web stranica',
+        paragraphs: ['Ova stranica ne koristi oglase, analitiku ni kolačiće za praćenje.',
+          'Za prikaz ovih stranica, pružatelj hostinga prima standardne podatke veze, kao što su IP adresa i zaglavlja zahtjeva preglednika. Može čuvati operativne i sigurnosne zapise prema vlastitim pravilima. To je odvojeno od vanmrežne aplikacije.'],
       },
       {
-        heading: 'Izmjene',
-        paragraphs: [
-          'Ako se ova politika promijeni, nova verzija biće objavljena na ovoj stranici sa novim datumom.',
-        ],
-      },
-      {
-        heading: 'Kontakt',
-        paragraphs: ['Vedad Keskin', 'vedad.keskin98@gmail.com'],
+        id: 'changes',
+        heading: 'Izmjene politike',
+        paragraphs: ['Ako se način postupanja s podacima promijeni, ažurirat ćemo ovu stranicu i datum stupanja na snagu. Važeću politiku uvijek možete pronaći ovdje.'],
       },
     ],
   },
-];
-
-export const listings: ListingCopy[] = [
-  {
-    id: 'en',
-    languageName: 'English',
-    appName: 'Rummy Tracker',
-    shortDescription:
-      'Offline Rummy and Remi scorekeeper. No betting, cards, or accounts.',
-    fullDescription: `Rummy Tracker keeps score for Rummy and Remi. It does not deal cards, take bets, or move money. You play the cards at the table. The app only records the result.
-
-Live rounds
-Add each round one player at a time. Preset scores cover a regular win (-40), going out (-140), and a rummy (-500). You can also type any whole number. After every score, the table sorts itself. The lowest total wins.
-
-Resume a session
-An unfinished game is saved on the phone. Close the app and continue the same session later.
-
-Players and all-time wins
-Add, rename, and delete players. When you finish a session, the winner's career win count updates on the rankings screen.
-
-Edit a game while it is in progress
-Change a score from an earlier round, remove a player, or add someone to the current session. A game needs at least two players.
-
-English and Bosnian
-Switch language at any time. Every screen is available in both.
-
-Nothing leaves the phone
-Names, scores, and rankings stay on the device. There is no account, no advertising, and the release app does not use the internet.`,
-  },
-  {
-    id: 'bs',
-    languageName: 'Bosanski',
-    appName: 'Rummy Tracker',
-    shortDescription: 'Vanmrežni bilježnik rezultata za remi. Bez klađenja, karata i naloga.',
-    fullDescription: `Rummy Tracker vodi rezultat za remi (rummy). Ne dijeli karte, ne prima uloge i ne prenosi novac. Karte igrate za stolom. Aplikacija samo bilježi rezultat.
-
-Runde
-Rundu dodajete igrač po igrač. Gotove vrijednosti su obična pobjeda (-40), izlazak (-140) i remi (-500). Možete upisati i bilo koji cijeli broj. Poslije svakog rezultata tabela se sama sortira. Najmanji zbir pobjeđuje.
-
-Nastavak partije
-Nedovršena partija ostaje sačuvana na telefonu. Zatvorite aplikaciju i nastavite istu sesiju kasnije.
-
-Igrači i pobjede
-Igrače možete dodati, preimenovati i obrisati. Kada završite sesiju, broj pobjeda pobjednika ažurira se na rang-listi.
-
-Izmjene tokom igre
-Možete ispraviti rezultat iz ranije runde, ukloniti igrača ili dodati nekoga u tekuću sesiju. Za partiju su potrebna najmanje dva igrača.
-
-Engleski i bosanski
-Jezik možete promijeniti u bilo kojem trenutku. Svaki ekran postoji na oba jezika.
-
-Ništa ne napušta telefon
-Imena, rezultati i rang-lista ostaju na uređaju. Nema naloga, nema oglasa, a objavljena aplikacija ne koristi internet.`,
-  },
-];
-
-export const playConsole = [
-  { label: 'App name', value: developer.appName },
-  { label: 'Package name', value: developer.packageId },
-  { label: 'Version name', value: developer.versionName },
-  { label: 'Version code', value: developer.versionCode },
-  { label: 'Price', value: 'Free' },
-  { label: 'Type', value: 'Game' },
-  { label: 'Category', value: 'Cards' },
-  { label: 'Ads', value: 'No' },
-  { label: 'In-app purchases', value: 'No' },
-  { label: 'App access', value: 'All features are available without a login.' },
-  {
-    label: 'Privacy policy URL',
-    value: 'https://<your-vercel-domain>/privacy',
-  },
-  { label: 'Developer email', value: developer.email },
-  {
-    label: 'Data safety',
-    value:
-      'Data is not collected and not shared. Player names, scores, rankings, and language stay on the device. No advertising ID.',
-  },
-  {
-    label: 'Content rating',
-    value:
-      'Scorekeeper only. No violence, sexual content, user chat, location sharing, digital purchases, or real-money or simulated gambling.',
-  },
-  {
-    label: 'Target audience',
-    value: 'Not a children\'s app. Do not opt into the Families program.',
-  },
-  { label: 'Financial features', value: 'None. The app does not take stakes or move money.' },
-  { label: 'News, health, government', value: 'No' },
 ];

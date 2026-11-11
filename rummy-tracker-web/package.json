@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
+    "test": "npm run build && node scripts/check-site.mjs",
     "serve:ssr:rummy-tracker-web": "node dist/rummy-tracker-web/server/server.mjs"
   },
   "private": true,

@@ -1,21 +1,22 @@
-<div class="site">
-  <header class="top">
-    <a routerLink="/" class="brand">
-      <img src="logo.png" width="96" height="96" alt="Rummy Tracker" />
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="site-shell">
+  <header class="site-header">
+    <a routerLink="/" class="brand" aria-label="Rummy Tracker home">
+      <img src="logo.png" width="72" height="72" alt="" />
+      <span>Rummy <strong>Tracker</strong></span>
     </a>
-    <nav aria-label="Pages">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
-        >Overview</a
-      >
-      <a routerLink="/privacy" routerLinkActive="active">Privacy</a>
-      <a routerLink="/listing" routerLinkActive="active">Play listing</a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">Home</a>
+      <a routerLink="/privacy" routerLinkActive="active" ariaCurrentWhenActive="page">Privacy</a>
     </nav>
+    <a class="header-contact" [href]="'mailto:' + developer.email" aria-label="Email the developer" title="Get in touch">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>
+    </a>
   </header>
-  <main>
-    <router-outlet />
-  </main>
-  <footer>
-    <p>{{ developer.name }}</p>
-    <p><a [href]="'mailto:' + developer.email">{{ developer.email }}</a></p>
+  <main id="main-content" tabindex="-1"><router-outlet /></main>
+  <footer class="site-footer">
+    <div class="footer-brand"><span class="suit-mark" aria-hidden="true">♠</span><span>For the love of game night.</span></div>
+    <div class="footer-links"><a routerLink="/privacy">Privacy policy</a><a [href]="'mailto:' + developer.email">Contact</a></div>
+    <p class="studio-credit">Made by <img src="nightfall-wordmark.png" width="105" height="32" alt="Nightfall Studio" /></p>
   </footer>
 </div>

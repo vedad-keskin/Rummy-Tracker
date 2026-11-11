@@ -213,10 +213,13 @@ Future<void> main(List<String> arguments) async {
   File(
     'assets/images/logo.jpg',
   ).writeAsBytesSync(img.encodeJpg(icon, quality: 95));
-  File(
-    'assets/images/logo_transparent.png',
-  ).copySync('../rummy-tracker-web/public/logo.png');
+  save(
+    '../rummy-tracker-web/public/logo.png',
+    img.copyResize(logo, width: 512, interpolation: img.Interpolation.average),
+  );
   save('../rummy-tracker-web/public/favicon.png', tile(logo, 64, 0.82));
+  File('assets/branding/nightfall-wordmark.png')
+      .copySync('../rummy-tracker-web/public/nightfall-wordmark.png');
   save(
     '../rummy-tracker-web/public/apple-touch-icon.png',
     tile(logo, 180, 0.82),
