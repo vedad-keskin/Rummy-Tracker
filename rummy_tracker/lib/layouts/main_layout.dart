@@ -52,6 +52,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   @override
   Widget build(BuildContext context) {
     final languageService = context.watch<LanguageService>();
+    final logoSize = (MediaQuery.sizeOf(context).height -
+            MediaQuery.paddingOf(context).vertical - 432)
+        .clamp(112.0, 240.0);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -98,19 +101,27 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           // Content
           SafeArea(
             child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 64, 24, 16),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // App Title / Brand
-                    Image.asset(
-                      'assets/images/logo_transparent.png',
-                      height: (MediaQuery.sizeOf(context).height * 0.3)
-                          .clamp(120.0, 240.0),
-                      fit: BoxFit.contain,
-                      semanticLabel: 'Rummy Tracker',
+                    Center(
+                      child: HeroMode(
+                        enabled: !MediaQuery.disableAnimationsOf(context),
+                        child: Hero(
+                          tag: 'rummy-logo',
+                          child: Image.asset(
+                            'assets/images/logo_transparent.png',
+                            width: logoSize,
+                            height: logoSize,
+                            fit: BoxFit.contain,
+                            semanticLabel: 'Rummy Tracker',
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     // Centered Menu Container

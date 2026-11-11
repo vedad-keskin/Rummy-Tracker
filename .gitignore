@@ -1,4 +1,5 @@
 # Miscellaneous
+/output/
 *.class
 *.lock
 *.log
