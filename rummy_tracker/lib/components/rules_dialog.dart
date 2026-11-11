@@ -96,7 +96,6 @@ class _RulesDialogContentState extends State<_RulesDialogContent> {
                   maxHeight: maxHeight,
                 ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Title Bar
                     Container(
@@ -136,12 +135,8 @@ class _RulesDialogContentState extends State<_RulesDialogContent> {
                     ),
 
                     // Content Area
-                    Flexible(
+                    Expanded(
                       child: Container(
-                        constraints: const BoxConstraints(
-                          maxHeight: 450,
-                          minHeight: 250,
-                        ),
                         margin: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.05),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rummy_tracker/background.dart';
+import 'package:rummy_tracker/components/how_to_play_button.dart';
+import 'package:rummy_tracker/components/language_switch.dart';
+import 'package:rummy_tracker/components/rules_dialog.dart';
 
 import 'package:rummy_tracker/layouts/splash_screen.dart';
 import 'package:rummy_tracker/main.dart';
@@ -20,7 +23,7 @@ void main() {
     const Size(768, 1024),
   ]) {
     testWidgets(
-      'Cards visibly move, frame the logo and reach the menu at $size',
+      'Intro reaches the menu and header controls receive taps at $size',
       (tester) async {
         tester.view.devicePixelRatio = 1;
         tester.view.physicalSize = size;
@@ -85,11 +88,80 @@ void main() {
           tester.getRect(backgroundButton).bottom,
           lessThanOrEqualTo(safeRect.bottom),
         );
+
+        // Tap the painted controls, including where scroll padding overlaps.
+        final language = find.byType(LanguageSwitch);
+        final instructions = find.byType(HowToPlayButton);
+        await tester.tapAt(tester.getCenter(language));
+        await tester.pumpAndSettle();
+        expect(find.text('IGRAJ'), findsOneWidget);
+        await tester.tapAt(tester.getCenter(language));
+        await tester.pumpAndSettle();
+        expect(find.text('PLAY NOW'), findsOneWidget);
+
+        final instructionsRect = tester.getRect(instructions);
+        for (final tap in [
+          instructionsRect.center,
+          Offset(instructionsRect.left + 12, instructionsRect.center.dy),
+          Offset(instructionsRect.right - 12, instructionsRect.center.dy),
+        ]) {
+          await tester.tapAt(tap);
+          await tester.pumpAndSettle();
+          expect(find.byType(RulesDialog), findsOneWidget);
+          await tester.tap(
+            find.descendant(
+              of: find.byType(RulesDialog),
+              matching: find.byIcon(Icons.close_rounded),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.byType(RulesDialog), findsNothing);
+        }
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );
   }
+
+  testWidgets(
+    'Instructions fill the dialog and keep navigation at the bottom',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(768, 1024);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      await tester.pumpWidget(const MyApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(HowToPlayButton));
+      await tester.pumpAndSettle();
+
+      final panel = tester.getRect(
+        find
+            .descendant(
+              of: find.byType(RulesDialog),
+              matching: find.byType(ClipRRect),
+            )
+            .first,
+      );
+      final next = find.widgetWithText(ElevatedButton, 'NEXT');
+      final footer = tester.getRect(next);
+      expect(panel.bottom - footer.bottom, inInclusiveRange(0, 32));
+      expect(tester.getSize(find.byType(PageView)).height, greaterThan(450));
+
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      expect(find.text('2 / 8'), findsOneWidget);
+      expect(tester.getRect(next), footer);
+      final previous = find.widgetWithText(ElevatedButton, 'BACK');
+      expect(tester.getRect(previous).bottom, footer.bottom);
+      await tester.tap(previous);
+      await tester.pumpAndSettle();
+      expect(find.text('1 / 8'), findsOneWidget);
+      expect(tester.getRect(next), footer);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   testWidgets('Reduced motion uses a brief fade without card or Hero motion', (
     tester,

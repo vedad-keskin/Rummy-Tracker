@@ -45,7 +45,7 @@ The original package/signing/AAB approach was sound. This plan now reflects the 
 - Signing remains configured through ignored `android/key.properties` and the existing upload keystore outside the repository. No signing material is embedded in the app or store materials.
 - Release AAB: `rummy_tracker/build/app/outputs/bundle/release/app-release.aab`.
 - Named upload copy: `output/play-release/rummy-tracker-3.1.2-1.aab` (ignored by Git).
-- AAB SHA-256: `082735EED85388410E6E26182D2AC988DE49DE3A5466581172F7806DA89493C5`.
+- AAB SHA-256: `49EEE9DE69C8F2A449F249A5D29D0BDA1A3A7FEB712765BEB05D45FA1954170A`.
 
 ## Corrections to the original plan
 
@@ -59,6 +59,10 @@ The original package/signing/AAB approach was sound. This plan now reflects the 
 
 ## Validation completed
 
+- Instructions fill the dialog with an expanding, independently scrollable text area; navigation stays anchored at the bottom across pages. The new regression check passed together with the compact and landscape checks.
+
+- Header hit testing regression is fixed: the language/instructions controls are above the scroll viewport. Regression taps switch languages and open/close instructions from the center and both edges across four screen sizes; all ten widget tests pass.
+
 - Signed release AAB built successfully with Flutter 3.44.2.
 - Google bundletool validation passed; JAR signature verified.
 - Manifest: package `com.rummy.tracker`, version **3.1.2 (1)**, min SDK **24**, target/compile SDK **36**, not debuggable, no Internet or advertising-ID permission.
@@ -67,7 +71,7 @@ The original package/signing/AAB approach was sound. This plan now reflects the 
 - A universal APK generated from the AAB passed `zipalign -c -P 16 4`. This derivative is locally debug-signed for testing; upload the original release-signed AAB to Play.
 - Branding dimensions, opacity, and mask safe zones passed the existing branding checker.
 - Android 16 emulator game smoke test passed: edit/add four players, select a game, enter four rounds with positive/negative presets, force-stop and resume all rounds, finish with the correct lowest-score winner, and verify the winner receives one all-time win. Seven real 1080 x 1920 screenshots were captured.
-- Nine widget tests passed, including hold-only credits, metadata-driven `v 3.1.2` below Close, no home privacy button, English/Bosnian localization, intro, backgrounds, and compact screens.
+- Ten widget tests passed, including hold-only credits, metadata-driven `v 3.1.2` below Close, no home privacy button, English/Bosnian localization, intro, backgrounds, and compact screens.
 - The rebuilt bundle was checked on the Android 16 emulator: tapping Nightfall leaves credits hidden, holding reveals `v 3.1.2` below Close, and the home privacy button is absent. The home store screenshot was refreshed from that build.
 - Focused analysis has no errors/warnings; the existing `withOpacity` / asynchronous BuildContext infos remain. Gradle/AGP/Kotlin future-support notices do not block this successful release build; no toolchain migration is needed for this submission.
 - Runtime testing on a real 16 KB device/emulator is still recommended; static alignment checks are not a substitute for that test. Play's device/pre-launch reports remain part of release review.

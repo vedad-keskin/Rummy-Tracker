@@ -91,25 +91,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ),
           ),
-          // Language Switch - Top Right
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            right: 16,
-            child: const LanguageSwitch(),
-          ),
-          // How to Play Button - Top Left
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 16,
-            child: HowToPlayButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const RulesDialog(),
-                );
-              },
-            ),
-          ),
           // Content
           SafeArea(
             child: Center(
@@ -368,6 +349,24 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   ],
                 ),
               ),
+            ),
+          ),
+          // Keep header controls above the scroll view's hit-test area.
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: const LanguageSwitch(),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            child: HowToPlayButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const RulesDialog(),
+                );
+              },
             ),
           ),
           Positioned(
