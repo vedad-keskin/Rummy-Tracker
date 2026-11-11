@@ -9,10 +9,13 @@ todos:
     content: Sign release builds with the existing external upload keystore
     status: completed
   - id: policy-listing
-    content: Verify the live Nightfall Studio privacy policy and add an accessible in-app link
+    content: Verify the live Nightfall Studio privacy policy and prepare listing copy
     status: completed
+  - id: in-app-policy
+    content: Before Play submission, choose an in-app privacy text or link location without adding a privacy button
+    status: pending
   - id: version-credits
-    content: Read installed package version and build number in credits
+    content: Show only the installed version under Close in hold-to-open credits
     status: completed
   - id: aab
     content: Build and validate the signed 3.1.2 build 1 release bundle
@@ -38,16 +41,16 @@ The original package/signing/AAB approach was sound. This plan now reflects the 
 - App: **Rummy Tracker**, developer brand **Nightfall Studio**.
 - Android package: `com.rummy.tracker`; keep it unchanged after first upload.
 - `pubspec.yaml`: **3.1.2+1**, giving Android version name **3.1.2** and build/version code **1**.
-- Credits query the installed package metadata on Android and iOS; they follow native version overrides too. Tap the home-screen Nightfall mark to open credits.
+- Hold the home-screen Nightfall mark to open credits; tapping does not reveal them. Only `v 3.1.2` appears below Close, read from installed Android/iOS package metadata. The build number is kept in the package metadata and is not displayed.
 - Signing remains configured through ignored `android/key.properties` and the existing upload keystore outside the repository. No signing material is embedded in the app or store materials.
 - Release AAB: `rummy_tracker/build/app/outputs/bundle/release/app-release.aab`.
 - Named upload copy: `output/play-release/rummy-tracker-3.1.2-1.aab` (ignored by Git).
-- AAB SHA-256: `F6D95D845A21602F389EA3BE5AA126D8924DFE8CDBE9D3571911A66E53C6EA1E`.
+- AAB SHA-256: `082735EED85388410E6E26182D2AC988DE49DE3A5466581172F7806DA89493C5`.
 
 ## Corrections to the original plan
 
 1. **Policy is already deployed:** <https://rummy-tracker-web.vercel.app/privacy> returned HTTP 200. It identifies the app and Nightfall Studio, covers local storage, OS backups, deletion, website hosting, and has a working Contact email mechanism in the site navigation/footer. No personal contact section needs to return.
-2. **Add privacy inside the app:** done through an accessible shield button on the home screen. It opens the policy in an external browser; no game/player data is sent with the link. A selectable URL appears if a browser cannot open it.
+2. **In-app privacy remains a submission item:** the owner requested removal of the mobile privacy button. It and its browser-launch dependency have been removed. The web policy remains live; before Play submission, an in-app policy text or link location still needs to be chosen without adding a privacy button.
 3. **Listing copy is local:** the obsolete `/listing` page was deliberately removed. Use `rummy_tracker/store_assets/google-play-submission.md` for English/Bosnian descriptions, release notes, exact asset paths, and Console instructions.
 4. **Choose an accurate app type:** recommended **App / Tools** for this physical-card scorekeeping utility. The old plan mixed App and Game/Cards. Describe scorekeeping clearly; do not imply playable cards, online multiplayer, or wagering.
 5. **Do not preselect an IARC result:** answer the questionnaire honestly and let IARC calculate the rating. Choose the actual intended audience; do not select ages only to avoid Families rules. The current policy says the app is not directed to under-13s.
@@ -63,8 +66,9 @@ The original package/signing/AAB approach was sound. This plan now reflects the 
 - All six arm64-v8a/x86_64 native libraries passed 16 KB ELF LOAD and RELRO checks.
 - A universal APK generated from the AAB passed `zipalign -c -P 16 4`. This derivative is locally debug-signed for testing; upload the original release-signed AAB to Play.
 - Branding dimensions, opacity, and mask safe zones passed the existing branding checker.
-- Android 16 emulator smoke test passed: edit/add four players, select a game, enter four rounds with positive/negative presets, force-stop and resume all rounds, finish with the correct lowest-score winner, and verify the winner receives one all-time win. Credits visibly show 3.1.2 build 1; the privacy button launches the external browser. Seven real 1080 x 1920 screenshots were captured.
-- Nine widget tests passed, including metadata-driven version text, English/Bosnian localization, privacy browser launch/fallback, intro, backgrounds, and compact screens.
+- Android 16 emulator game smoke test passed: edit/add four players, select a game, enter four rounds with positive/negative presets, force-stop and resume all rounds, finish with the correct lowest-score winner, and verify the winner receives one all-time win. Seven real 1080 x 1920 screenshots were captured.
+- Nine widget tests passed, including hold-only credits, metadata-driven `v 3.1.2` below Close, no home privacy button, English/Bosnian localization, intro, backgrounds, and compact screens.
+- The rebuilt bundle was checked on the Android 16 emulator: tapping Nightfall leaves credits hidden, holding reveals `v 3.1.2` below Close, and the home privacy button is absent. The home store screenshot was refreshed from that build.
 - Focused analysis has no errors/warnings; the existing `withOpacity` / asynchronous BuildContext infos remain. Gradle/AGP/Kotlin future-support notices do not block this successful release build; no toolchain migration is needed for this submission.
 - Runtime testing on a real 16 KB device/emulator is still recommended; static alignment checks are not a substitute for that test. Play's device/pre-launch reports remain part of release review.
 

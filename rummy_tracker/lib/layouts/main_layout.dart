@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:rummy_tracker/background.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:rummy_tracker/players_section/players_screen.dart';
 import 'package:rummy_tracker/ranking_section/ranking_screen.dart';
@@ -41,37 +39,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           child: FadeTransition(opacity: anim1, child: child),
         );
       },
-    );
-  }
-
-  Future<void> _openPrivacyPolicy() async {
-    try {
-      if (await launchUrl(
-        Uri.parse('https://rummy-tracker-web.vercel.app/privacy'),
-        mode: LaunchMode.externalApplication,
-      )) {
-        return;
-      }
-    } on PlatformException {
-      // Show the URL below when the device cannot open a browser.
-    }
-    if (!mounted) return;
-    final language = context.read<LanguageService>();
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(language.translate('privacy_policy')),
-        content: SelectableText(
-          '${language.translate('privacy_browser_error')}\n\n'
-          'https://rummy-tracker-web.vercel.app/privacy',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(language.translate('close')),
-          ),
-        ],
-      ),
     );
   }
 
@@ -426,34 +393,21 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           ),
           // Studio branding / credits trigger
           Positioned(
-            left: 76,
-            bottom: MediaQuery.paddingOf(context).bottom + 16,
-            child: IconButton.outlined(
-              key: const ValueKey('privacy-policy'),
-              tooltip: languageService.translate('privacy_policy'),
-              onPressed: _openPrivacyPolicy,
-              icon: const Icon(Icons.privacy_tip_outlined, size: 20),
-              style: IconButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.white.withValues(alpha: 0.08),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
-                shape: const CircleBorder(),
-                minimumSize: const Size(48, 48),
-                padding: const EdgeInsets.all(12),
-              ),
-            ),
-          ),
-          Positioned(
             right: 16,
             bottom: MediaQuery.paddingOf(context).bottom + 16,
-            child: Tooltip(
-              message: languageService.translate('about_app'),
-              child: TextButton(
-                key: const ValueKey('app-credits'),
-                onPressed: _showEasterEgg,
-                onLongPress: _showEasterEgg,
-                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-                child: const StudioMark(forceInvert: true, height: 22),
+            child: GestureDetector(
+              key: const ValueKey('app-credits'),
+              behavior: HitTestBehavior.opaque,
+              onLongPress: _showEasterEgg,
+              child: Semantics(
+                label: 'Nightfall Studio',
+                child: const SizedBox(
+                  width: 80,
+                  height: 48,
+                  child: Center(
+                    child: StudioMark(forceInvert: true, height: 22),
+                  ),
+                ),
               ),
             ),
           ),

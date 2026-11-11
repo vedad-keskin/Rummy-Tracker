@@ -7,8 +7,8 @@ Prepared 11 November 2026. Nothing has been uploaded or published.
 - Developer brand: **Nightfall Studio**.
 - Android package: `com.rummy.tracker`. Keep this for every future update.
 - First upload: **3.1.2 (build 1)**, from `version: 3.1.2+1` in `pubspec.yaml`.
-- Credits read the installed Android/iOS package metadata. Tap the Nightfall mark on the home screen to see it.
-- Privacy URL: <https://rummy-tracker-web.vercel.app/privacy>. The home-screen shield opens this URL in the external browser. No game data is attached.
+- Hold the home-screen Nightfall mark to reveal credits. They show only `v 3.1.2` below Close, read from the installed Android/iOS package metadata; tapping the mark does not reveal them.
+- Privacy URL: <https://rummy-tracker-web.vercel.app/privacy>. The mobile privacy button was removed at the owner's request. Before Play submission, an in-app policy text or link location still needs to be chosen without adding a privacy button.
 - Minimum Android API 24; target/compile API 36.
 
 Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console. A named copy is kept in the repository's ignored `../output/play-release/` folder. APKs there are for local testing only.
@@ -75,7 +75,7 @@ Suggested first release notes:
 - `google-play-feature-graphic.png`: 1024 × 500 RGB PNG. Generated with the built-in imagegen tool from the existing logo and website card-table reference, then downscaled/cropped to Play's dimensions. Prompt: `../../output/play-release/feature-graphic-prompt.md`.
 - `screenshots/`: real captures of the bundle-derived release app on an Android 16 emulator, 1080 × 1920 RGB PNG. Example players and scores are fictional. Use the numbered English captures for the default listing.
 
-Seven captures are ready: score table, score entry, player selection, home, players, winner, and win rankings. The emulator check also confirmed that four rounds survive a force-stop/relaunch, the lowest score wins, the winner receives one recorded win, credits show the bundle version, and the privacy button launches the external browser.
+Seven captures cover the score table, score entry, player selection, home, players, winner, and win rankings. The emulator game check confirmed that four rounds survive a force-stop/relaunch, the lowest score wins, and the winner receives one recorded win.
 
 Prioritize the score table and score entry. Splash-only pictures do not explain the product. Revisit screenshots whenever visible functionality changes.
 
@@ -84,7 +84,7 @@ Prioritize the score table and score entry. Splash-only pictures do not explain 
 1. Create **Rummy Tracker**, default language English, **free**. Recommended type **App**, category **Tools**, because this is a scorekeeping utility rather than a playable card game. Select accurate tags from the options Console actually offers.
 2. Add the website, public support email, listing copy, icon, feature graphic, and screenshots. The existing website Contact link is a working email mechanism; the removed personal contact section does not need to return. Complete the account's required identity/device/contact verification using your real details.
 3. Complete App content based on the shipped binary:
-   - **Privacy policy:** the URL above, also accessible from the app.
+   - **Privacy policy:** use the URL above. In-app policy text or a link remains to be added before submission, following removal of the mobile privacy button.
    - **App access:** all functionality available without login or special instructions.
    - **Ads:** no.
    - **Data safety:** no developer collection or sharing of user data; no analytics, advertising SDKs, or advertising ID. Names and scores are processed locally. The OS backup caveat is disclosed in the policy. Do not claim that device backups are disabled.
@@ -93,7 +93,7 @@ Prioritize the score table and score entry. Splash-only pictures do not explain 
    - **Target audience:** choose the ages you actually intend to serve. Current policy says not directed to children under 13; keep the Console declaration and design consistent. Do not choose ages merely to avoid Families rules.
    - **Financial / health / news / government features:** none. This app does not take bets or provide gambling services. Complete any additional declarations shown on the dashboard accurately.
 4. Enroll in **Play App Signing** and upload the signed AAB directly to **Closed testing**, as requested by the owner. Internal testing is optional and is being skipped. On the closed track, select the existing tester list already used by the other app in this developer account; do not change its members or the other app's testing configuration. Add a feedback contact, complete any required review, and record this app's opt-in link. Keep the existing upload keystore; back it and `android/key.properties` up securely outside Git.
-5. Install from the Play opt-in link on your Samsung. Add players, enter positive/negative/preset scores, close and resume, finish a game, check win rankings, switch language/background, open the privacy link, and confirm credits show **3.1.2 · Build 1**. Review Play's pre-launch report, especially crashes and device compatibility.
+5. Install from the Play opt-in link on your Samsung. Add players, enter positive/negative/preset scores, close and resume, finish a game, check win rankings, switch language/background, and hold the Nightfall mark to confirm credits show only **v 3.1.2** beneath Close. Review Play's pre-launch report, especially crashes and device compatibility.
 6. If your personal developer account was created after **13 November 2023** and production access is locked: run a **Closed test with at least 12 testers continuously opted in for 14 days**, gather real usage/feedback, then apply for production access. Reusing a list does not opt people in to this app: testers must join through Rummy Tracker's own opt-in link. Testing time on another app does not transfer. Internal testing does not satisfy this gate. Access is reviewed, not automatic after the timer.
 7. After access is granted and testing passes, choose distribution countries and submit production. Reuse/promote the same tested bundle when Console permits; a newly uploaded replacement needs a higher build number.
 

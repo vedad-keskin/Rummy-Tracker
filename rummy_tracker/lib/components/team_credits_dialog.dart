@@ -47,28 +47,7 @@ class _TeamCreditsDialogState extends State<TeamCreditsDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const StudioMark(forceInvert: true, height: 40),
-                  const SizedBox(height: 24),
-                  FutureBuilder<PackageInfo>(
-                    future: _packageInfo,
-                    builder: (context, snapshot) {
-                      final info = snapshot.data;
-                      return Text(
-                        info != null
-                            ? '${languageService.translate('version')} ${info.version}'
-                                  ' · ${languageService.translate('build')} ${info.buildNumber}'
-                            : snapshot.hasError
-                            ? languageService.translate('version_unavailable')
-                            : '',
-                        key: const ValueKey('app-version'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 48),
                   // Credits content
                   _buildCreditItem(
                     languageService.translate('project_lead'),
@@ -102,6 +81,23 @@ class _TeamCreditsDialogState extends State<TeamCreditsDialog> {
                         fontFamily: 'serif',
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<PackageInfo>(
+                    future: _packageInfo,
+                    builder: (context, snapshot) {
+                      final info = snapshot.data;
+                      if (info == null) return const SizedBox.shrink();
+                      return Text(
+                        'v ${info.version}',
+                        key: const ValueKey('app-version'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
