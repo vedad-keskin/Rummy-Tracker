@@ -1,122 +1,98 @@
 ---
 name: Google Play upload
-overview: Rummy Tracker can ship to Google Play as a free, offline scorekeeper. The installed Flutter SDK already targets Android 16. Before upload, the Android package id must leave `com.example` and the release build must be signed with an upload key, then the Play Console forms and store listing can be completed.
+overview: Prepare Rummy Tracker as a free offline scorekeeper. Signing and package identity are configured; the signed first bundle and store materials are prepared locally. Play Console upload and testing remain manual.
 todos:
   - id: package-id
-    content: Replace com.example.rummy_tracker with com.rummy.tracker and move MainActivity
+    content: Use the permanent Android package com.rummy.tracker
     status: completed
   - id: signing
-    content: Create an upload keystore outside the repo and point release builds at key.properties
+    content: Sign release builds with the existing external upload keystore
     status: completed
   - id: policy-listing
-    content: Angular site in rummy-tracker-web with privacy policy, Play listing copy, and Vercel static config
+    content: Verify the live Nightfall Studio privacy policy and add an accessible in-app link
+    status: completed
+  - id: version-credits
+    content: Read installed package version and build number in credits
     status: completed
   - id: aab
-    content: Build the signed release app bundle and confirm the output path
+    content: Build and validate the signed 3.1.2 build 1 release bundle
+    status: completed
+  - id: store-assets
+    content: Prepare the icon, feature graphic, listing copy, and real phone-format screenshots
+    status: completed
+  - id: console-testing
+    content: Complete Play Console declarations, upload directly to closed testing, reuse the existing tester list, and perform the Samsung acceptance check
     status: pending
-  - id: assets-console
-    content: Capture store icon, feature graphic, and phone screenshots, then follow the Play Console checklist through internal testing and production
+  - id: production-access
+    content: Complete required closed testing and apply for production access if this personal account is gated
     status: pending
 isProject: false
 ---
 
-# Prepare Rummy Tracker for Google Play
+# Google Play upload — audited 11 November 2026
 
-The app in [rummy_tracker](rummy_tracker) is a free, offline scorekeeper (English and Bosnian). It has no accounts, ads, purchases, or network code. Player names and scores stay in `shared_preferences` on the device. Flutter **3.44.2** already sets `minSdk 24`, `targetSdk 36`, and `compileSdk 36`, with NDK `28.2.13676358` (16 KB page alignment). That meets Play’s current target-API requirement. Do not change those SDK numbers.
+The original package/signing/AAB approach was sound. This plan now reflects the deployed policy, current app, and current official Play requirements. Nothing has been uploaded or published. The owner confirmed this is a personal account and no previous bundle has been uploaded.
 
-Steps 1 and 2 are done. [rummy_tracker/android/app/build.gradle.kts](rummy_tracker/android/app/build.gradle.kts) now uses `com.rummy.tracker`, and the release build type is signed with the upload keystore at `C:\Users\Administrator\keystores\rummy-tracker-upload.jks`. Passwords live only in gitignored `rummy_tracker/android/key.properties`. Back both files up before the first Play upload. The package id cannot be changed after that upload.
+## Prepared release
 
-Version `3.1.2+1` in [rummy_tracker/pubspec.yaml](rummy_tracker/pubspec.yaml) is fine for the first upload (`versionName` 3.1.2, `versionCode` 1). iOS stays untouched.
+- App: **Rummy Tracker**, developer brand **Nightfall Studio**.
+- Android package: `com.rummy.tracker`; keep it unchanged after first upload.
+- `pubspec.yaml`: **3.1.2+1**, giving Android version name **3.1.2** and build/version code **1**.
+- Credits query the installed package metadata on Android and iOS; they follow native version overrides too. Tap the home-screen Nightfall mark to open credits.
+- Signing remains configured through ignored `android/key.properties` and the existing upload keystore outside the repository. No signing material is embedded in the app or store materials.
+- Release AAB: `rummy_tracker/build/app/outputs/bundle/release/app-release.aab`.
+- Named upload copy: `output/play-release/rummy-tracker-3.1.2-1.aab` (ignored by Git).
+- AAB SHA-256: `F6D95D845A21602F389EA3BE5AA126D8924DFE8CDBE9D3571911A66E53C6EA1E`.
 
-```mermaid
-flowchart TD
-  fixId[Replace package id]
-  sign[Create upload key and sign release]
-  policy[Publish privacy policy URL]
-  aab[Build app-release.aab]
-  listing[Store listing and policy forms]
-  internal[Internal testing install]
-  gate{Production access already unlocked?}
-  closed[Closed test: 12 testers for 14 days]
-  prod[Production release]
-  fixId --> sign --> aab --> listing --> internal --> gate
-  gate -->|yes| prod
-  gate -->|no| closed --> prod
-  policy --> listing
-```
+## Corrections to the original plan
 
-## 1. Permanent Android package id
+1. **Policy is already deployed:** <https://rummy-tracker-web.vercel.app/privacy> returned HTTP 200. It identifies the app and Nightfall Studio, covers local storage, OS backups, deletion, website hosting, and has a working Contact email mechanism in the site navigation/footer. No personal contact section needs to return.
+2. **Add privacy inside the app:** done through an accessible shield button on the home screen. It opens the policy in an external browser; no game/player data is sent with the link. A selectable URL appears if a browser cannot open it.
+3. **Listing copy is local:** the obsolete `/listing` page was deliberately removed. Use `rummy_tracker/store_assets/google-play-submission.md` for English/Bosnian descriptions, release notes, exact asset paths, and Console instructions.
+4. **Choose an accurate app type:** recommended **App / Tools** for this physical-card scorekeeping utility. The old plan mixed App and Game/Cards. Describe scorekeeping clearly; do not imply playable cards, online multiplayer, or wagering.
+5. **Do not preselect an IARC result:** answer the questionnaire honestly and let IARC calculate the rating. Choose the actual intended audience; do not select ages only to avoid Families rules. The current policy says the app is not directed to under-13s.
+6. **Verify the finished bundle:** NDK version alone does not prove 16 KB support. Validation checked bundle configuration, packaged 64-bit ELF LOAD/RELRO alignment, and APK zip alignment.
+7. **Personal-account gate is conditional:** if the account was created after 13 November 2023 and production is locked, at least 12 testers must stay opted in to a closed test for 14 consecutive days, followed by a production-access application. Internal testing does not count toward that gate.
 
-Change `namespace` and `applicationId` from `com.example.rummy_tracker` to **`com.rummy.tracker`**. Move [MainActivity.kt](rummy_tracker/android/app/src/main/kotlin/com/example/rummy_tracker/MainActivity.kt) to `kotlin/com/rummy/tracker/` and update its `package` line.
+## Validation completed
 
-This id cannot be changed after the first Play upload. Say so before implementation if a different id is required.
+- Signed release AAB built successfully with Flutter 3.44.2.
+- Google bundletool validation passed; JAR signature verified.
+- Manifest: package `com.rummy.tracker`, version **3.1.2 (1)**, min SDK **24**, target/compile SDK **36**, not debuggable, no Internet or advertising-ID permission.
+- Bundle native-library packing: `PAGE_ALIGNMENT_16K`.
+- All six arm64-v8a/x86_64 native libraries passed 16 KB ELF LOAD and RELRO checks.
+- A universal APK generated from the AAB passed `zipalign -c -P 16 4`. This derivative is locally debug-signed for testing; upload the original release-signed AAB to Play.
+- Branding dimensions, opacity, and mask safe zones passed the existing branding checker.
+- Android 16 emulator smoke test passed: edit/add four players, select a game, enter four rounds with positive/negative presets, force-stop and resume all rounds, finish with the correct lowest-score winner, and verify the winner receives one all-time win. Credits visibly show 3.1.2 build 1; the privacy button launches the external browser. Seven real 1080 x 1920 screenshots were captured.
+- Nine widget tests passed, including metadata-driven version text, English/Bosnian localization, privacy browser launch/fallback, intro, backgrounds, and compact screens.
+- Focused analysis has no errors/warnings; the existing `withOpacity` / asynchronous BuildContext infos remain. Gradle/AGP/Kotlin future-support notices do not block this successful release build; no toolchain migration is needed for this submission.
+- Runtime testing on a real 16 KB device/emulator is still recommended; static alignment checks are not a substitute for that test. Play's device/pre-launch reports remain part of release review.
 
-## 2. Upload keystore
+## Next: Play Console — closed testing directly
 
-Create an upload keystore **outside the repo**, for example `C:\Users\Administrator\keystores\rummy-tracker-upload.jks`:
+The owner requested skipping internal testing and reusing the tester list already used by another app in this developer account. Internal testing is optional. Complete app setup, then start the closed test directly. Reusing a list grants eligibility; testers still need to opt in to Rummy Tracker specifically. Testing time from another app does not transfer.
 
-```bat
-keytool -genkeypair -v -keystore C:\Users\Administrator\keystores\rummy-tracker-upload.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-```
+Console URL: <https://play.google.com/console/u/0/developers/7479752174002745096/home>.
 
-Add `rummy_tracker/android/key.properties` (already gitignored, along with `*.jks`) pointing at that file, and wire a `release` `signingConfig` in [build.gradle.kts](rummy_tracker/android/app/build.gradle.kts). Passwords stay only in `key.properties` and in an offline backup of the `.jks`. New Play apps use Play App Signing: Google holds the app signing key, and this file is only the upload key. Losing it blocks updates until Play support resets the upload key.
+Automation access check: the Browser tool returned `No browser is available`; the Computer Use tool could not connect to its native desktop pipe. No Console changes, uploads, or submissions have been made. Resume Console work once the logged-in browser is exposed to this chat.
 
-## 3. Privacy policy and store copy
+Follow `rummy_tracker/store_assets/google-play-submission.md`:
 
-Done as the Angular site in [rummy-tracker-web](rummy-tracker-web). Deploy that folder on Vercel. The Play Console privacy policy URL is `https://<your-vercel-domain>/privacy`. Listing text, in English and Bosnian, is on `/listing`. Contact on the policy is Vedad Keskin, vedad.keskin98@gmail.com.
+1. Back up the upload keystore and its credentials securely outside Git. Complete the developer account's identity, contact, and device verification if prompted.
+2. Create the free app, complete its listing and App content declarations, provide the live privacy URL, and enroll in Play App Signing.
+3. Upload the AAB directly to Closed testing, select the existing tester list used by the other app without modifying that list, and make the closed release available after any required review. Record the new Rummy Tracker opt-in link for the owner to share. Install through that link on the Samsung.
+4. Run the full acceptance checklist and review Play's pre-launch results.
+5. Complete the closed-test/production-access gate if Console requires it, then submit production only after testing passes.
 
-## 4. Release bundle
+Every newly uploaded AAB needs an increasing version code. To change the version later, edit `pubspec.yaml` and rebuild/reinstall; hot reload cannot update native metadata.
 
-From `rummy_tracker`:
+## Official sources
 
-```bat
-flutter build appbundle --release
-```
+- [Target API requirements](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en): API 36 required for new submissions since 31 August 2026; the current target is sufficient.
+- [User Data / privacy policy](https://support.google.com/googleplay/android-developer/answer/10144311?hl=en).
+- [Data safety](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en).
+- [Store assets](https://support.google.com/googleplay/android-developer/answer/9866151?hl=en).
+- [Testing for personal accounts](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en-GB).
+- [16 KB page sizes](https://developer.android.com/guide/practices/page-sizes).
 
-Upload only `rummy_tracker/build/app/outputs/bundle/release/app-release.aab`. Do not upload an APK. The README’s `flutter build apk` command is for local installs only.
-
-## 5. Store assets you still need
-
-Play will not accept the release without these. Existing launcher mipmaps are not the store icon.
-
-- Hi-res icon: 512×512 PNG, under 1 MB, full square, no rounded mask.
-- Feature graphic: 1024×500 PNG or JPEG.
-- Phone screenshots: at least 2, preferably 4–8, portrait, from splash, menu, score table, winner, players, and rankings. Min side 320 px, max 3840 px, no alpha.
-- Optional: a 7-inch tablet set. Not required if the listing is phone-only.
-
-After the plan is approved, screenshots can be captured from a device or emulator, and the icon plus feature graphic can be exported from the existing logo.
-
-## 6. Play Console, in order
-
-You already have the developer account. Create the app in [Play Console](https://play.google.com/console) as **Rummy Tracker**, default language English, type **App**, free.
-
-Complete **Policy and programs** with these answers, which match the code:
-
-- Privacy policy: the https URL from step 3.
-- App access: all features work with no login.
-- Ads: no.
-- Content rating (IARC): card scorekeeper, no violence, no sexual content, no user chat, no location sharing, no digital purchases, no real-money or simulated gambling. Expected result is Everyone / PEGI 3.
-- Target audience: not a children’s app. Select ages that start at 13 or older so the Families program does not apply.
-- News, COVID/health, government: no.
-- Financial features: none. This is the important one. The app only records scores. It does not take stakes, sell chips, or link to gambling sites. If a review flags the word “Rummy”, reply that it is an offline scorekeeper.
-- Data safety: data is not collected and not shared. Names and scores never leave the device, so they are not “collected” under Play’s definition. No advertising ID. The release manifest has no `INTERNET` permission (only debug/profile manifests do).
-- Category: **Game → Cards**. Tags along the lines of “Card” and “Score”.
-
-Then **Store listing**: paste the copy, upload the icon, feature graphic, and screenshots.
-
-Then **Release**:
-
-1. Countries: all countries, unless you want to exclude one.
-2. Create an **Internal testing** release, upload the AAB, and enroll Play App Signing when asked.
-3. Add yourself as a tester, install from the Play link, and run a full game: add players, enter a round, close the app, resume, finish, check rankings.
-4. Production:
-   - If this Play account can already publish to production, promote the same release.
-   - If the account is a personal account created after 13 November 2023 and production is still locked, use a **Closed testing** track with at least **12 testers opted in for 14 consecutive days**, then apply for production access. An internal test does not count toward that requirement. Organization accounts are not subject to that wait.
-
-Review after you submit production often takes from a few hours to several days. The first upload from a new app can take longer.
-
-## What stays out of scope
-
-- iOS bundle id (`com.example.rummyTracker`) and App Store.
-- Ads, billing, accounts, or a backend.
-- Changing `versionCode` beyond `1` for this first upload.
+No website redeployment is needed for these app changes. An iOS archive / App Store submission remains outside this Android preparation task.

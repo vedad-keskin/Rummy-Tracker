@@ -5,6 +5,13 @@ const Map<String, String> bsTranslations = {
   'play_now': 'IGRAJ',
   'players': 'IGRAČI',
   'ranking': 'RANG LISTA',
+  'about_app': 'O aplikaciji Rummy Tracker',
+  'version': 'Verzija',
+  'build': 'Izdanje',
+  'version_unavailable': 'Verzija nije dostupna',
+  'privacy_policy': 'Politika privatnosti',
+  'privacy_browser_error':
+      'Otvorite ovu adresu u pregledniku da pročitate našu politiku privatnosti:',
   'background': 'POZADINA',
   'change_background': 'Promijeni pozadinu',
   'background_game_night': 'Večer za igru',

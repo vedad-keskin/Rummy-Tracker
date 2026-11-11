@@ -113,6 +113,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(SplashScreen), findsNothing);
     expect(find.text('PLAY NOW'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('change-background')));
+    await tester.pump();
+    await tester.pump();
+    expect(
+      find.image(const AssetImage('assets/images/game_night.webp')),
+      findsNothing,
+    );
+    expect(
+      find.image(const AssetImage('assets/images/burgundy_club.webp')),
+      findsOneWidget,
+    );
     expect(logo, findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -150,6 +161,7 @@ void main() {
         findsOneWidget,
       );
 
+      var previousBackground = 'game_night';
       for (final (file, name) in [
         ('burgundy_club', 'Burgundy Club'),
         ('emerald_felt', 'Emerald Felt'),
@@ -158,7 +170,27 @@ void main() {
         ('burgundy_club', 'Burgundy Club'),
       ]) {
         await tester.tap(find.byKey(const ValueKey('change-background')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+        final incoming = find.image(AssetImage('assets/images/$file.webp'));
+        expect(
+          find.image(AssetImage('assets/images/$previousBackground.webp')),
+          findsOneWidget,
+        );
+        expect(incoming, findsOneWidget);
+        final fades = tester.widgetList<FadeTransition>(
+          find.ancestor(of: incoming, matching: find.byType(FadeTransition)),
+        );
+        expect(
+          fades.any((fade) => fade.opacity.value > 0 && fade.opacity.value < 1),
+          isTrue,
+        );
         await tester.pumpAndSettle();
+        expect(
+          find.image(AssetImage('assets/images/$previousBackground.webp')),
+          findsNothing,
+        );
+        previousBackground = file;
         expect(
           find.image(AssetImage('assets/images/$file.webp')),
           findsOneWidget,

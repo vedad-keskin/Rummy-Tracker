@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rummy_tracker/background.dart';
-import 'dart:async';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:rummy_tracker/players_section/players_screen.dart';
 import 'package:rummy_tracker/ranking_section/ranking_screen.dart';
@@ -23,21 +24,14 @@ class MainMenuScreen extends StatefulWidget {
 }
 
 class _MainMenuScreenState extends State<MainMenuScreen> {
-  Timer? _easterEggTimer;
   final GameStateService _gameStateService = GameStateService();
   final PlayerService _playerService = PlayerService();
-
-  @override
-  void dispose() {
-    _easterEggTimer?.cancel();
-    super.dispose();
-  }
 
   void _showEasterEgg() {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Team Credits',
+      barrierLabel: context.read<LanguageService>().translate('about_app'),
       barrierColor: Colors.black87,
       transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, anim1, anim2) => const TeamCreditsDialog(),
@@ -50,13 +44,46 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     );
   }
 
+  Future<void> _openPrivacyPolicy() async {
+    try {
+      if (await launchUrl(
+        Uri.parse('https://rummy-tracker-web.vercel.app/privacy'),
+        mode: LaunchMode.externalApplication,
+      )) {
+        return;
+      }
+    } on PlatformException {
+      // Show the URL below when the device cannot open a browser.
+    }
+    if (!mounted) return;
+    final language = context.read<LanguageService>();
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(language.translate('privacy_policy')),
+        content: SelectableText(
+          '${language.translate('privacy_browser_error')}\n\n'
+          'https://rummy-tracker-web.vercel.app/privacy',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(language.translate('close')),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final languageService = context.watch<LanguageService>();
     final backgrounds = context.watch<BackgroundService>();
-    final logoSize = (MediaQuery.sizeOf(context).height -
-            MediaQuery.paddingOf(context).vertical - 496)
-        .clamp(112.0, 240.0);
+    final logoSize =
+        (MediaQuery.sizeOf(context).height -
+                MediaQuery.paddingOf(context).vertical -
+                496)
+            .clamp(112.0, 240.0);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -64,10 +91,22 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         children: [
           // Background Image
           Positioned.fill(
-            child: Image.asset(
-              backgrounds.assetPath,
-              fit: BoxFit.cover,
-              gaplessPlayback: true,
+            child: AnimatedSwitcher(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeInOut,
+              switchOutCurve: Curves.easeInOut,
+              layoutBuilder: (current, previous) => Stack(
+                fit: StackFit.expand,
+                children: [...previous, if (current != null) current],
+              ),
+              child: Image.asset(
+                backgrounds.assetPath,
+                key: ValueKey(backgrounds.assetPath),
+                fit: BoxFit.cover,
+                excludeFromSemantics: true,
+              ),
             ),
           ),
           // Gradient Overlay for depth
@@ -369,7 +408,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             bottom: MediaQuery.paddingOf(context).bottom + 16,
             child: IconButton.outlined(
               key: const ValueKey('change-background'),
-              tooltip: '${languageService.translate('background')}: '
+              tooltip:
+                  '${languageService.translate('background')}: '
                   '${languageService.translate(backgrounds.nameKey)}. '
                   '${languageService.translate('change_background')}',
               onPressed: backgrounds.next,
@@ -386,23 +426,35 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           ),
           // Studio branding / credits trigger
           Positioned(
+            left: 76,
+            bottom: MediaQuery.paddingOf(context).bottom + 16,
+            child: IconButton.outlined(
+              key: const ValueKey('privacy-policy'),
+              tooltip: languageService.translate('privacy_policy'),
+              onPressed: _openPrivacyPolicy,
+              icon: const Icon(Icons.privacy_tip_outlined, size: 20),
+              style: IconButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                shape: const CircleBorder(),
+                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.all(12),
+              ),
+            ),
+          ),
+          Positioned(
             right: 16,
-            bottom: 16,
-            child: GestureDetector(
-              onLongPressStart: (_) {
-                _easterEggTimer = Timer(const Duration(seconds: 1), () {
-                  if (mounted) {
-                    _showEasterEgg();
-                  }
-                });
-              },
-              onLongPressEnd: (_) {
-                _easterEggTimer?.cancel();
-              },
-              onLongPressCancel: () {
-                _easterEggTimer?.cancel();
-              },
-              child: const StudioMark(forceInvert: true, height: 22),
+            bottom: MediaQuery.paddingOf(context).bottom + 16,
+            child: Tooltip(
+              message: languageService.translate('about_app'),
+              child: TextButton(
+                key: const ValueKey('app-credits'),
+                onPressed: _showEasterEgg,
+                onLongPress: _showEasterEgg,
+                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                child: const StudioMark(forceInvert: true, height: 22),
+              ),
             ),
           ),
         ],

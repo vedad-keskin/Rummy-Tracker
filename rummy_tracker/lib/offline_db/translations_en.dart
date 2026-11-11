@@ -5,6 +5,13 @@ const Map<String, String> enTranslations = {
   'play_now': 'PLAY NOW',
   'players': 'PLAYERS',
   'ranking': 'RANKING',
+  'about_app': 'About Rummy Tracker',
+  'version': 'Version',
+  'build': 'Build',
+  'version_unavailable': 'Version unavailable',
+  'privacy_policy': 'Privacy policy',
+  'privacy_browser_error':
+      'Open this address in your browser to read our privacy policy:',
   'background': 'BACKGROUND',
   'change_background': 'Next background',
   'background_game_night': 'Game Night',
