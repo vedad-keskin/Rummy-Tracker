@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rummy_tracker/background.dart';
 
 import 'package:rummy_tracker/layouts/splash_screen.dart';
 import 'package:rummy_tracker/main.dart';
@@ -73,6 +74,17 @@ void main() {
         expect(find.text('PLAY NOW'), findsOneWidget);
         expect(find.text('PLAYERS'), findsOneWidget);
         expect(find.text('RANKING'), findsOneWidget);
+        final backgroundButton = find.byKey(
+          const ValueKey('change-background'),
+        );
+        expect(
+          tester.getSize(backgroundButton).height,
+          greaterThanOrEqualTo(48),
+        );
+        expect(
+          tester.getRect(backgroundButton).bottom,
+          lessThanOrEqualTo(safeRect.bottom),
+        );
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
       },
@@ -115,5 +127,73 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('PLAY NOW'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'Background button cycles, applies to other screens and remembers the choice',
+    (tester) async {
+      await tester.pumpWidget(const MyApp());
+      await tester.pumpAndSettle();
+      expect(
+        find.image(const AssetImage('assets/images/game_night.webp')),
+        findsOneWidget,
+      );
+
+      final button = find.byKey(const ValueKey('change-background'));
+      expect(tester.widget(button), isA<IconButton>());
+      expect(
+        find.descendant(of: button, matching: find.byType(Text)),
+        findsNothing,
+      );
+      expect(
+        find.byTooltip('BACKGROUND: Game Night. Next background'),
+        findsOneWidget,
+      );
+
+      for (final (file, name) in [
+        ('burgundy_club', 'Burgundy Club'),
+        ('emerald_felt', 'Emerald Felt'),
+        ('modern_midnight', 'Modern Midnight'),
+        ('game_night', 'Game Night'),
+        ('burgundy_club', 'Burgundy Club'),
+      ]) {
+        await tester.tap(find.byKey(const ValueKey('change-background')));
+        await tester.pumpAndSettle();
+        expect(
+          find.image(AssetImage('assets/images/$file.webp')),
+          findsOneWidget,
+        );
+        expect(
+          find.byTooltip('BACKGROUND: $name. Next background'),
+          findsOneWidget,
+        );
+      }
+      await tester.tap(find.text('PLAYERS'));
+      await tester.pumpAndSettle();
+      expect(
+        find.image(const AssetImage('assets/images/burgundy_club.webp')),
+        findsOneWidget,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getInt('app_background'), 5);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(const MyApp());
+      await tester.pumpAndSettle();
+      expect(
+        find.image(const AssetImage('assets/images/burgundy_club.webp')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  test('Removed backgrounds fall back to the default', () async {
+    SharedPreferences.setMockInitialValues({'app_background': 2});
+    final backgrounds = BackgroundService();
+    await Future<void>.delayed(Duration.zero);
+    expect(backgrounds.assetPath, 'assets/images/game_night.webp');
+    backgrounds.dispose();
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rummy_tracker/background.dart';
 import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
 import 'package:rummy_tracker/offline_db/language_service.dart';
@@ -130,7 +131,11 @@ class _RankingScreenState extends State<RankingScreen> {
         children: [
           // Background Image
           Positioned.fill(
-            child: Image.asset('assets/images/bg.jpg', fit: BoxFit.cover),
+            child: Image.asset(
+              context.watch<BackgroundService>().assetPath,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+            ),
           ),
           // Gradient Overlay
           Positioned.fill(

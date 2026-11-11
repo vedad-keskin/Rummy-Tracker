@@ -5,6 +5,12 @@ const Map<String, String> bsTranslations = {
   'play_now': 'IGRAJ',
   'players': 'IGRAČI',
   'ranking': 'RANG LISTA',
+  'background': 'POZADINA',
+  'change_background': 'Promijeni pozadinu',
+  'background_game_night': 'Večer za igru',
+  'background_burgundy_club': 'Bordo klub',
+  'background_emerald_felt': 'Smaragdno sukno',
+  'background_modern_midnight': 'Moderna ponoć',
 
   // Player Selection Screen
   'select_players': 'ODABERI IGRAČE',

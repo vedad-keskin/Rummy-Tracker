@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rummy_tracker/background.dart';
 import 'package:rummy_tracker/layouts/splash_screen.dart';
 import 'package:rummy_tracker/offline_db/language_service.dart';
 
@@ -12,8 +13,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => LanguageService(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LanguageService()),
+        ChangeNotifierProvider(create: (_) => BackgroundService(), lazy: false),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Rummy Tracker',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rummy_tracker/background.dart';
 import 'package:provider/provider.dart';
 import 'package:rummy_tracker/offline_db/player_service.dart';
 import 'package:rummy_tracker/offline_db/language_service.dart';
@@ -81,8 +82,9 @@ class _PhaseThreeWinScreenState extends State<PhaseThreeWinScreen>
           // Background Image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/bg.jpg',
+              context.watch<BackgroundService>().assetPath,
               fit: BoxFit.cover,
+              gaplessPlayback: true,
             ),
           ),
           // Gradient Overlay

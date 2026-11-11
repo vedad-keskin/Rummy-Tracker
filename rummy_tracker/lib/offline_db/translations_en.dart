@@ -5,6 +5,12 @@ const Map<String, String> enTranslations = {
   'play_now': 'PLAY NOW',
   'players': 'PLAYERS',
   'ranking': 'RANKING',
+  'background': 'BACKGROUND',
+  'change_background': 'Next background',
+  'background_game_night': 'Game Night',
+  'background_burgundy_club': 'Burgundy Club',
+  'background_emerald_felt': 'Emerald Felt',
+  'background_modern_midnight': 'Modern Midnight',
 
   // Player Selection Screen
   'select_players': 'SELECT PLAYERS',

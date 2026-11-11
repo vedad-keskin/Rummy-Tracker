@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rummy_tracker/background.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:rummy_tracker/players_section/players_screen.dart';
@@ -52,8 +53,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   @override
   Widget build(BuildContext context) {
     final languageService = context.watch<LanguageService>();
+    final backgrounds = context.watch<BackgroundService>();
     final logoSize = (MediaQuery.sizeOf(context).height -
-            MediaQuery.paddingOf(context).vertical - 432)
+            MediaQuery.paddingOf(context).vertical - 496)
         .clamp(112.0, 240.0);
 
     return Scaffold(
@@ -62,7 +64,11 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         children: [
           // Background Image
           Positioned.fill(
-            child: Image.asset('assets/images/bg.jpg', fit: BoxFit.cover),
+            child: Image.asset(
+              backgrounds.assetPath,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+            ),
           ),
           // Gradient Overlay for depth
           Positioned.fill(
@@ -102,7 +108,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 64, 24, 16),
+                padding: const EdgeInsets.fromLTRB(24, 64, 24, 80),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -355,6 +361,26 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            bottom: MediaQuery.paddingOf(context).bottom + 16,
+            child: IconButton.outlined(
+              key: const ValueKey('change-background'),
+              tooltip: '${languageService.translate('background')}: '
+                  '${languageService.translate(backgrounds.nameKey)}. '
+                  '${languageService.translate('change_background')}',
+              onPressed: backgrounds.next,
+              icon: const Icon(Icons.palette_outlined, size: 20),
+              style: IconButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                shape: const CircleBorder(),
+                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.all(12),
               ),
             ),
           ),
