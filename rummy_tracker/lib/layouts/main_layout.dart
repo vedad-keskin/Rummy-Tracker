@@ -105,43 +105,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // App Title / Brand
-                    Column(
-                      children: [
-                        Text(
-                          languageService.translate('app_title_rummy'),
-                          style: TextStyle(
-                            fontSize: 56,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 10,
-                            fontFamily:
-                                'serif', // Using serif for a more "classic" game feel
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withOpacity(0.5),
-                                blurRadius: 25,
-                                offset: const Offset(0, 0),
-                              ),
-                              Shadow(
-                                color: Colors.black.withOpacity(0.5),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          languageService.translate('app_title_tracker'),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w300,
-                            color: Colors.white.withOpacity(0.9),
-                            letterSpacing: 14,
-                          ),
-                        ),
-                      ],
+                    Image.asset(
+                      'assets/images/logo_transparent.png',
+                      height: (MediaQuery.sizeOf(context).height * 0.3)
+                          .clamp(120.0, 240.0),
+                      fit: BoxFit.contain,
+                      semanticLabel: 'Rummy Tracker',
                     ),
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 24),
                     // Centered Menu Container
                     Container(
                       padding: const EdgeInsets.symmetric(

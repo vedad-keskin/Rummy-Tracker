@@ -268,49 +268,11 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: _fadeAnimation.value,
                   child: Transform.scale(
                     scale: 0.5 + (0.5 * _scaleAnimation.value),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // App Title
-                        Text(
-                          'RUMMY',
-                          style: TextStyle(
-                            fontSize: 64,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 12,
-                            fontFamily: 'serif',
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.8),
-                                blurRadius: 30,
-                                offset: const Offset(0, 0),
-                              ),
-                              Shadow(
-                                color: const Color(0xFF30E8BF).withValues(alpha: 0.3),
-                                blurRadius: 40,
-                                offset: const Offset(0, 0),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'TRACKER',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w300,
-                            color: Colors.white.withValues(alpha: 0.9),
-                            letterSpacing: 16,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                blurRadius: 15,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    child: Image.asset(
+                      'assets/images/logo_transparent.png',
+                      width: MediaQuery.sizeOf(context).shortestSide * 0.72,
+                      fit: BoxFit.contain,
+                      semanticLabel: 'Rummy Tracker',
                     ),
                   ),
                 );
