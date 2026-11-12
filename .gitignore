@@ -1,5 +1,6 @@
 # Miscellaneous
 /output/
+/rummy_tracker/store_assets/
 *.class
 *.lock
 *.log
