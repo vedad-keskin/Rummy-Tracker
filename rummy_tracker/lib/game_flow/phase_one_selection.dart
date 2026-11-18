@@ -167,10 +167,14 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                           ),
                         ),
                         Expanded(
-                          child: Column(
-                            children: [
-                              Text(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
                                 languageService.translate('select_players'),
+                                maxLines: 1,
+                                softWrap: false,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -180,10 +184,10 @@ class _PhaseOneScreenState extends State<PhaseOneScreen> {
                                   fontFamily: 'serif',
                                 ),
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 2), // Balancing spacer
+                        const SizedBox(width: 48),
                       ],
                     ),
                   ),

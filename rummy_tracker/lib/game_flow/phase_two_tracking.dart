@@ -1889,15 +1889,23 @@ class _PhaseTwoTrackingScreenState extends State<PhaseTwoTrackingScreen>
                           ),
                         ),
                         Expanded(
-                          child: Text(
-                            languageService.translate('points_tracker'),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 2,
-                              fontFamily: 'serif',
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                languageService.translate('points_tracker'),
+                                maxLines: 1,
+                                softWrap: false,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 2,
+                                  fontFamily: 'serif',
+                                ),
+                              ),
                             ),
                           ),
                         ),

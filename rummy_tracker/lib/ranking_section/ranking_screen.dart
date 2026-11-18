@@ -124,7 +124,7 @@ class _RankingScreenState extends State<RankingScreen> {
   @override
   Widget build(BuildContext context) {
     final languageService = context.watch<LanguageService>();
-    
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -178,15 +178,23 @@ class _RankingScreenState extends State<RankingScreen> {
                           ),
                         ),
                         Expanded(
-                          child: Text(
-                            languageService.translate('ranking'),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 4,
-                              fontFamily: 'serif',
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                languageService.translate('ranking'),
+                                maxLines: 1,
+                                softWrap: false,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 4,
+                                  fontFamily: 'serif',
+                                ),
+                              ),
                             ),
                           ),
                         ),
